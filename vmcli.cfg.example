@@ -1,0 +1,47 @@
+[logging]
+# If set, script will be logging to a file with provided path
+#log_path = ./vmcli.log
+# Set to one from the DEBUG, INFO, WARNING, ERROR, CRITICAL or NOTSET to ignore logging
+#log_level = WARNING
+# See https://docs.python.org/2/library/logging.html#logrecord-attributes
+#log_format = "%(asctime)s %(levelname)s %(message)s"
+
+[authentication]
+# Credentials to use for connecting to vCenter server
+# It is not recommended to store credentials in this file, use ENV variables instead
+# When password is omitted both here and in ENV variable, you will be prompted to enter it interactively
+#username =
+#password =
+#vcenter =
+# Skip SSL certs verification
+#insecure_connection = False
+
+[timeouts]
+# Default timeouts in second to wait for a specific part of a system or system itself
+# Timeout to wait for Guest's OS to boot up
+#os_timeout = 120
+# Timeout to wait for Guest's vmtools to be ready
+#tools_timeout = 20
+
+[deploy]
+# Settings to use for deployments of virtual machines. It is strongly recommended to use flavors instead!
+#cpu = 1
+# Virtual machine memory in megabytes
+#mem = 512
+# Network defined in vCenter to attach to first interface of a vm
+#network = dvPortGroup10
+# Network configuration to apply to first interface of a vm. Gateway and broadcast will be parsed automatically
+#network_cfg = 10.1.10.2/24
+#template =
+#poweron = True
+# These values are optional. E.g. if you have only one datacenter, cluster, etc.. that object will be used by default
+#datacenter =
+#folder =
+#datastore =
+#cluster =
+#resource_pool =
+
+[guest]
+# Login information used to access guest's operating system via vmtools
+#guest_user =
+#guest_pass =
