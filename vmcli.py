@@ -12,7 +12,7 @@ import netaddr
 import time
 
 
-def get_config(section, key, env_var, var_type, default):
+def get_config(section, key, env_var, var_type, default=None):
     """Tries to load configuration directive from environment variable or configuration file in
     the exact order. This directives could be overriden via command line arguments."""
     value = os.getenv(env_var, None)
@@ -24,7 +24,7 @@ def get_config(section, key, env_var, var_type, default):
                 return default
     else:
         return value
-    return None
+    return default
 
 
 def args(*args, **kwargs):
@@ -235,6 +235,14 @@ def connect(vcenter=None, username=None, password=None, insecure=None):
         sys.exit(1)
 
 
+def load_vm_flavor(flavor):
+    # TODO: change to import from some appropiate location based on input
+    if flavor:
+        return m1_tiny
+    else:
+        return {}
+
+
 class Worker(object):
     """Class providing interface for various waiting events."""
 
@@ -403,6 +411,8 @@ class ListCommands(BaseCommands):
             # print obj.runtime.powerState
             if obj.parent:
                 print obj.parent.name
+            #obj = self.get_vm_obj(name)
+            #print obj.guest.guestId
 
 
 class CloneCommands(BaseCommands):
@@ -418,7 +428,7 @@ class CloneCommands(BaseCommands):
             self.clone_vm(args.name, args.template, args.datacenter, args.folder,
                     args.datastore, args.cluster, args.resource_pool, args.poweron)
         except VmCLIException as e:
-            print(e.message)
+            self.logger.error(e.message)
             sys.exit(2)
 
     @args('--datacenter', help='datacenter where to create vm')
@@ -478,6 +488,67 @@ class CloneCommands(BaseCommands):
         self.worker.wait_for_tasks([task])
 
 
+class CreateEmptyVmCommands(BaseCommands):
+    """creates empty vm without any guest OS and disks."""
+
+    def __init__(self, *args, **kwargs):
+        super(CreateEmptyVmCommands, self).__init__(*args, **kwargs)
+
+    @args('--name', help='name for a cloned object')
+    @args('--flavor', help='flavor to use for a new vm')
+    @args('--folder', help='folder where to place vm')
+    @args('--resource-pool', help='resource pool, which should be used for vm')
+    @args('--datastore', help='datastore where to store vm')
+    @args('--mem', help='memory to set for a vm in megabytes', type=int)
+    @args('--cpu', help='cpu count to set for a vm', type=int)
+    def execute(self, args):
+        flavor = load_vm_flavor(args.flavor)
+        folder = args.folder or flavor.get('folder', None) or VM_FOLDER
+        resource_pool = args.resource_pool or flavor.get('resource_pool', None) or VM_RESOURCE_POOL
+        datastore = args.datastore or flavor.get('datastore', None) or VM_DATASTORE
+        mem = args.mem or flavor.get('mem', None) or VM_MEM
+        cpu = args.cpu or flavor.get('cpu', None) or VM_CPU
+
+        self.create_empty_vm(args.name, folder, resource_pool, datastore, mem, cpu)
+
+
+    def create_empty_vm(self, name, folder, resource_pool, datastore, mem, cpu):
+        """Creates empty vm without disk"""
+        if not (name or folder or resource_pool or datastore):
+            raise VmCLIException('Missing arguments! Make sure name, folder, resource_pool and datastore are present.')
+
+        # Store logs and snapshots withing same directory as ds_path, which is [datastore]vm_name
+        ds_path = '[{}]{}'.format(datastore, name)
+        vm_files = vim.vm.FileInfo(logDirectory=None, snapshotDirectory=None, suspendDirectory=None, vmPathName=ds_path)
+        # Load cpu and memory configuration
+        if not mem:
+            mem = VM_MIN_MEM
+        elif mem < VM_MIN_MEM or mem > VM_MAX_MEM:
+            raise VmCLIException('Memory must be between {}-{}'.format(VM_MIN_MEM, VM_MAX_MEM))
+
+        if not cpu:
+            cpu = VM_MIN_CPU
+        elif cpu < VM_MIN_CPU or cpu > VM_MAX_CPU:
+            raise VmCLIException('CPU count must be between {}-{}'.format(VM_MIN_CPU, VM_MAX_CPU))
+
+        # configuration specification for the new vm, if no mem and cpu is provided, minimal values will be used
+        config_spec = vim.vm.ConfigSpec()
+        config_spec.name = name
+        config_spec.memoryMB = mem
+        config_spec.numCPUs = cpu
+        config_spec.files = vm_files
+        config_spec.guestId = 'other3xLinux64Guest'
+        config_spec.version = 'vmx-08'
+
+        folder = self.get_obj([VMWARE_TYPES['folder']], folder)
+        resource_pool = self.get_obj([VMWARE_TYPES['resource_pool']], resource_pool)
+        task = folder.CreateVM_Task(config=config_spec, pool=resource_pool)
+        self.worker.wait_for_tasks([task])
+
+
+# TODO: AttachCommands (floppy, cd/dvd, hdd, net adapter)
+
+
 class ModifyCommands(BaseCommands):
     """modify VMware objects resources or configuration."""
 
@@ -490,7 +561,7 @@ class ModifyCommands(BaseCommands):
             try:
                 self.change_hw_resource(args.name, args.mem, args.cpu)
             except VmCLIException as e:
-                print(e.message)
+                self.logger.error(e.message)
                 sys.exit(3)
         elif args.net and args.dev:
             self.change_network(args.name, args.net, args.dev)
@@ -581,7 +652,7 @@ class ExecCommands(BaseCommands):
         try:
             self.exec_inside_vm(args.name, args.cmd, args.guest_user, args.guest_pass, wait_for_tools=True)
         except VmCLIException as e:
-            print(e.message)
+            self.logger.error(e.message)
             sys.exit(4)
 
     def exec_inside_vm(self, name, commands, guest_user=None, guest_pass=None, wait_for_tools=False):
@@ -662,7 +733,7 @@ class CreateVmCommandBundle(BaseCommands):
     def __init__(self, *args, **kwargs):
         super(CreateVmCommandBundle, self).__init__(*args, **kwargs)
 
-    @args('--name', help='name for a new vm')
+    @args('--name', required=True, help='name for a new vm')
     @args('--template', help='template object to use as a source of cloning')
     @args('--flavor', help='flavor to use for a vm cloning')
     @args('--datacenter', help='datacenter where to create vm')
@@ -678,13 +749,10 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--guest-pass', help="guest user's password")
     def execute(self, args):
         if args.flavor:
-            # TODO: change to import from some appropiate location based on input
-            flavor = m1_tiny
-        else:
-            flavor = {}
+            flavor = load_vm_flavor(args.flavor)
 
         # load needed variables
-        name = args.name or flavor.get('name', None)
+        name = args.name
         template = args.template or flavor.get('template', None) or VM_TEMPLATE
         datacenter = args.datacenter or flavor.get('datacenter', None) or VM_DATACENTER
         folder = args.folder or flavor.get('folder', None) or VM_FOLDER
@@ -772,6 +840,7 @@ def get_arg_subparsers(parser):
 COMMANDS = {
     'list': ListCommands,
     'create': CreateVmCommandBundle,
+    'create-empty': CreateEmptyVmCommands,
     'clone': CloneCommands,
     'modify': ModifyCommands,
     'exec': ExecCommands,
@@ -803,5 +872,5 @@ if __name__ == '__main__':
     try:
         command.execute(args)
     except VmCLIException as e:
-        print(e.message)
+        logger.critical(e.message)
         sys.exit(1)
