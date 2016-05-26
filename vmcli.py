@@ -10,6 +10,7 @@ import atexit
 import requests
 import netaddr
 import time
+from collections import OrderedDict
 
 
 def get_config(section, key, env_var, var_type, default=None):
@@ -411,8 +412,8 @@ class ListCommands(BaseCommands):
             # print obj.runtime.powerState
             if obj.parent:
                 print obj.parent.name
-            #obj = self.get_vm_obj(name)
-            #print obj.guest.guestId
+            if obj.guest:
+                print obj.guest.guestId
 
 
 class CloneCommands(BaseCommands):
@@ -537,7 +538,7 @@ class CreateEmptyVmCommands(BaseCommands):
         config_spec.memoryMB = mem
         config_spec.numCPUs = cpu
         config_spec.files = vm_files
-        config_spec.guestId = 'other3xLinux64Guest'
+        config_spec.guestId = 'otherLinux64Guest'
         config_spec.version = 'vmx-08'
 
         folder = self.get_obj([VMWARE_TYPES['folder']], folder)
@@ -837,15 +838,15 @@ def get_arg_subparsers(parser):
 
 # Register commands to be available to user, key will be used as a subcommand name:
 # ./vmcli.py list ...
-COMMANDS = {
-    'list': ListCommands,
-    'create': CreateVmCommandBundle,
-    'create-empty': CreateEmptyVmCommands,
-    'clone': CloneCommands,
-    'modify': ModifyCommands,
-    'exec': ExecCommands,
-    'power': PowerCommands,
-}
+COMMANDS = OrderedDict([
+    ('list', ListCommands),
+    ('clone', CloneCommands),
+    ('create', CreateVmCommandBundle),
+    ('create-empty', CreateEmptyVmCommands),
+    ('modify', ModifyCommands),
+    ('exec', ExecCommands),
+    ('power', PowerCommands),
+])
 
 
 if __name__ == '__main__':
