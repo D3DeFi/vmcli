@@ -176,6 +176,8 @@ VM_MIN_CPU = 1
 VM_MAX_CPU = 16
 VM_MIN_MEM = 256
 VM_MAX_MEM = 16384
+VM_MIN_DISK = 1
+VM_MAX_DISK = 2000
 
 
 # Flavors
@@ -350,7 +352,7 @@ class BaseCommands(object):
     def get_obj(self, vimtype, name, default=False):
         """Gets the vsphere object associated with a given text name.
         If default is set to True and name does not match, return first object found."""
-        # TODO: make cache or find better way to retreive objects
+        # TODO: make cache or find better way to retreive objects + destroy view object (it is huge in mem)
         # Create container view containing object found
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
         if name is not None:
@@ -490,7 +492,7 @@ class CloneCommands(BaseCommands):
 
 
 class CreateEmptyVmCommands(BaseCommands):
-    """creates empty vm without any guest OS and disks."""
+    """creates empty vm without any guest OS, controllers, disks, floppies, network adapters or cd/dvd drives."""
 
     def __init__(self, *args, **kwargs):
         super(CreateEmptyVmCommands, self).__init__(*args, **kwargs)
@@ -548,6 +550,92 @@ class CreateEmptyVmCommands(BaseCommands):
 
 
 # TODO: AttachCommands (floppy, cd/dvd, hdd, net adapter)
+class AttachCommands(BaseCommands):
+    """attaches specified device to the vm."""
+
+    def __init__(self, *args, **kwargs):
+        super(AttachCommands, self).__init__(*args, **kwargs)
+
+    @args('--name', help='name of a virtual machine')
+    def execute(self, args):
+        try:
+            if args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
+                raise VmCLIException('Size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
+            self.attach_disk(args.name, args.size)
+        except VmCLIException as e:
+            self.logger.error(e.message)
+            sys.exit(5)
+
+    @args('--size', help='size of a virtual disk to attach in gigabytes', type=int)
+    def attach_disk(self, name, size):
+        """Attaches disk to a virtual machine. If no SCSI controller is present, then it is attached as well."""
+        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+
+        disks = []
+        controller = None
+        # iterate over existing devices and try to find disks and controllerKey
+        self.logger.info('Searching for already existing disks and SCSI controllers...')
+        for device in vm.config.hardware.device:
+            # search for existing SCSI controller or create one if none found
+            # TODO: provide flag when to create new controller
+            if isinstance(device, vim.vm.device.VirtualSCSIController) and not controller:
+                controller = device
+            elif isinstance(device, vim.vm.device.VirtualDisk):
+                disks.append(device)
+
+        disk_unit_number = 0
+        controller_unit_number = 7
+        scsi_spec = None
+        # if controller exists, calculate next unit number for disks otherwise create new controller and use defaults
+        if controller:
+            self.logger.info('Using existing SCSI controller(id:{}) to attach disk'.format(controller.key))
+            controller_unit_number = int(controller.key)
+            for disk in disks:
+                if disk.controllerKey == controller.key and disk_unit_number <= int(device.unitNumber):
+                    disk_unit_number = int(device.unitNumber) + 1
+        else:
+            self.logger.info('No existing SCSI controller found. Creating new one...')
+            scsi_spec = vim.vm.device.VirtualDeviceSpec()
+            scsi_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+            scsi_spec.device = vim.vm.device.ParaVirtualSCSIController(deviceInfo=vim.Description())
+            scsi_spec.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
+            # if there is no controller on the device present, assign it default values
+            scsi_spec.device.controllerKey = 100
+            scsi_spec.device.unitNumber = 3
+            scsi_spec.device.busNumber = 0
+            scsi_spec.device.hotAddRemove = True
+            scsi_spec.device.sharedBus = 'noSharing'
+            scsi_spec.device.scsiCtlrUnitNumber = controller_unit_number
+            controller = scsi_spec.device
+            controller.key = 100
+
+        if disk_unit_number >= 16:
+            raise VmCLIException('The SCSI controller does not support any more disks!')
+        elif disk_unit_number == 7:
+            disk_unit_number =+ 1  # 7 is reserved for SCSI controller itself
+
+        self.logger.info('Creating new empty disk with size {}G'.format(size))
+        disk_spec = vim.vm.device.VirtualDeviceSpec()
+        disk_spec.fileOperation = "create"
+        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        disk_spec.device = vim.vm.device.VirtualDisk()
+        disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        disk_spec.device.backing.diskMode = 'persistent'
+        disk_spec.device.backing.thinProvisioned = True
+        disk_spec.device.unitNumber = disk_unit_number
+        disk_spec.device.capacityInBytes = size * 1024 * 1024 * 1024
+        disk_spec.device.capacityInKB = size * 1024 * 1024
+        disk_spec.device.controllerKey = controller.key
+
+        if scsi_spec:
+            dev_change = [scsi_spec, disk_spec]
+        else:
+            dev_change = [disk_spec]
+
+        config_spec = vim.vm.ConfigSpec(deviceChange=dev_change)
+        self.logger.info('Attaching device to the virtual machine...')
+        task = vm.ReconfigVM_Task(config_spec)
+        self.worker.wait_for_tasks([task])
 
 
 class ModifyCommands(BaseCommands):
@@ -843,6 +931,7 @@ COMMANDS = OrderedDict([
     ('clone', CloneCommands),
     ('create', CreateVmCommandBundle),
     ('create-empty', CreateEmptyVmCommands),
+    ('attach', AttachCommands),
     ('modify', ModifyCommands),
     ('exec', ExecCommands),
     ('power', PowerCommands),
