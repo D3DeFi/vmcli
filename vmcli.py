@@ -562,7 +562,7 @@ class AttachCommands(BaseCommands):
     def execute(self, args):
         try:
             if args.type == 'hdd':
-                if args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
+                if not args.size or args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
                     raise VmCLIException('Size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
                 self.attach_disk(args.name, args.size)
             elif args.type == 'network':
@@ -590,7 +590,7 @@ class AttachCommands(BaseCommands):
 
         disk_unit_number = 0
         controller_unit_number = 7
-        scsi_spec = None
+        scsispec = None
         # if controller exists, calculate next unit number for disks otherwise create new controller and use defaults
         if controller:
             self.logger.info('Using existing SCSI controller(id:{}) to attach disk'.format(controller.key))
@@ -600,18 +600,18 @@ class AttachCommands(BaseCommands):
                     disk_unit_number = int(device.unitNumber) + 1
         else:
             self.logger.info('No existing SCSI controller found. Creating new one...')
-            scsi_spec = vim.vm.device.VirtualDeviceSpec()
-            scsi_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-            scsi_spec.device = vim.vm.device.ParaVirtualSCSIController(deviceInfo=vim.Description())
-            scsi_spec.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
+            scsispec = vim.vm.device.VirtualDeviceSpec()
+            scsispec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+            scsispec.device = vim.vm.device.ParaVirtualSCSIController(deviceInfo=vim.Description())
+            scsispec.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
             # if there is no controller on the device present, assign it default values
-            scsi_spec.device.controllerKey = 100
-            scsi_spec.device.unitNumber = 3
-            scsi_spec.device.busNumber = 0
-            scsi_spec.device.hotAddRemove = True
-            scsi_spec.device.sharedBus = 'noSharing'
-            scsi_spec.device.scsiCtlrUnitNumber = controller_unit_number
-            controller = scsi_spec.device
+            scsispec.device.controllerKey = 100
+            scsispec.device.unitNumber = 3
+            scsispec.device.busNumber = 0
+            scsispec.device.hotAddRemove = True
+            scsispec.device.sharedBus = 'noSharing'
+            scsispec.device.scsiCtlrUnitNumber = controller_unit_number
+            controller = scsispec.device
             controller.key = 100
 
         if disk_unit_number >= 16:
@@ -620,22 +620,22 @@ class AttachCommands(BaseCommands):
             disk_unit_number =+ 1  # 7 is reserved for SCSI controller itself
 
         self.logger.info('Creating new empty disk with size {}G'.format(size))
-        disk_spec = vim.vm.device.VirtualDeviceSpec()
-        disk_spec.fileOperation = "create"
-        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        disk_spec.device = vim.vm.device.VirtualDisk()
-        disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        disk_spec.device.backing.diskMode = 'persistent'
-        disk_spec.device.backing.thinProvisioned = True
-        disk_spec.device.unitNumber = disk_unit_number
-        disk_spec.device.capacityInBytes = size * 1024 * 1024 * 1024
-        disk_spec.device.capacityInKB = size * 1024 * 1024
-        disk_spec.device.controllerKey = controller.key
+        diskspec = vim.vm.device.VirtualDeviceSpec()
+        diskspec.fileOperation = "create"
+        diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        diskspec.device = vim.vm.device.VirtualDisk()
+        diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        diskspec.device.backing.diskMode = 'persistent'
+        diskspec.device.backing.thinProvisioned = True
+        diskspec.device.unitNumber = disk_unit_number
+        diskspec.device.capacityInBytes = size * 1024 * 1024 * 1024
+        diskspec.device.capacityInKB = size * 1024 * 1024
+        diskspec.device.controllerKey = controller.key
 
-        if scsi_spec:
-            dev_change = [scsi_spec, disk_spec]
+        if scsispec:
+            dev_change = [scsispec, diskspec]
         else:
-            dev_change = [disk_spec]
+            dev_change = [diskspec]
 
         config_spec = vim.vm.ConfigSpec(deviceChange=dev_change)
         self.logger.info('Attaching device to the virtual machine...')
