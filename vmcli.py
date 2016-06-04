@@ -186,6 +186,7 @@ m1_tiny = {
     'name': 'm1.tiny',
     'cpu': 1,
     'mem': 512,
+    'hdd': 10,
     'datacenter': 'dc01',
     'folder': 'Production',
     'datastore': 'ds01',
@@ -557,16 +558,20 @@ class AttachCommands(BaseCommands):
         super(AttachCommands, self).__init__(*args, **kwargs)
 
     @args('--name', help='name of a virtual machine')
+    @args('type', help='which type of object to attach', choices=['hdd', 'floppy', 'dvd', 'network'])
     def execute(self, args):
         try:
-            if args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
-                raise VmCLIException('Size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
-            self.attach_disk(args.name, args.size)
+            if args.type == 'hdd':
+                if args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
+                    raise VmCLIException('Size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
+                self.attach_disk(args.name, args.size)
+            elif args.type == 'network':
+                self.attach_net_adapter(args.name, args.net)
         except VmCLIException as e:
             self.logger.error(e.message)
             sys.exit(5)
 
-    @args('--size', help='size of a virtual disk to attach in gigabytes', type=int)
+    @args('--size', help='size of a disk to attach in gigabytes (hdd only)', type=int)
     def attach_disk(self, name, size):
         """Attaches disk to a virtual machine. If no SCSI controller is present, then it is attached as well."""
         vm = self.get_obj([VMWARE_TYPES['vm']], name)
@@ -636,6 +641,39 @@ class AttachCommands(BaseCommands):
         self.logger.info('Attaching device to the virtual machine...')
         task = vm.ReconfigVM_Task(config_spec)
         self.worker.wait_for_tasks([task])
+
+    @args('--net', help='net to attach to a new device (network only)')
+    def attach_net_adapter(self, name, net):
+        """Attaches virtual network adapter to the vm associated with a VLAN passed via argument."""
+        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        nicspec = vim.vm.device.VirtualDeviceSpec()
+        nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        nicspec.device = vim.vm.device.VirtualVmxnet3(deviceInfo=vim.Description())
+
+        # locate network, which should be assigned to device
+        network = self.get_obj([vim.dvs.DistributedVirtualPortgroup], net)
+        if not network:
+            raise VmCLIException('Unable to find provided network {}'.format(net))
+
+        dvs_port_conn = vim.dvs.PortConnection()
+        # use portGroupKey and DVS switch to build connection object
+        dvs_port_conn.portgroupKey = network.key
+        dvs_port_conn.switchUuid = network.config.distributedVirtualSwitch.uuid
+
+        # specify backing that connects device to a DVS switch portgroup
+        nicspec.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+        nicspec.device.backing.port = dvs_port_conn
+
+        nicspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+        nicspec.device.connectable.connected = True
+        nicspec.device.connectable.startConnected = True
+        nicspec.device.connectable.allowGuestControl = True
+
+        config_spec = vim.vm.ConfigSpec(deviceChange=[nicspec])
+        self.logger.info('Attaching device to the virtual machine...')
+        task = vm.ReconfigVM_Task(config_spec)
+        self.worker.wait_for_tasks([task])
+
 
 
 class ModifyCommands(BaseCommands):
