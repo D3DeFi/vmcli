@@ -550,15 +550,15 @@ class CreateEmptyVmCommands(BaseCommands):
         self.worker.wait_for_tasks([task])
 
 
-# TODO: AttachCommands (floppy, cd/dvd, hdd, net adapter)
 class AttachCommands(BaseCommands):
     """attaches specified device to the vm."""
+    # TODO: rework attach_net and attach_disk same as floppy and cdrom (to search for controllers)
 
     def __init__(self, *args, **kwargs):
         super(AttachCommands, self).__init__(*args, **kwargs)
 
     @args('--name', help='name of a virtual machine')
-    @args('type', help='which type of object to attach', choices=['hdd', 'floppy', 'dvd', 'network'])
+    @args('type', help='which type of object to attach', choices=['hdd', 'floppy', 'cdrom', 'network'])
     def execute(self, args):
         try:
             if args.type == 'hdd':
@@ -567,6 +567,10 @@ class AttachCommands(BaseCommands):
                 self.attach_disk(args.name, args.size)
             elif args.type == 'network':
                 self.attach_net_adapter(args.name, args.net)
+            elif args.type == 'floppy':
+                self.attach_floppy_drive(args.name)
+            elif args.type == 'cdrom':
+                self.attach_cdrom_drive(args.name)
         except VmCLIException as e:
             self.logger.error(e.message)
             sys.exit(5)
@@ -665,7 +669,7 @@ class AttachCommands(BaseCommands):
         nicspec.device.backing.port = dvs_port_conn
 
         nicspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-        nicspec.device.connectable.connected = True
+        nicspec.device.connectable.connected = False
         nicspec.device.connectable.startConnected = True
         nicspec.device.connectable.allowGuestControl = True
 
@@ -674,6 +678,65 @@ class AttachCommands(BaseCommands):
         task = vm.ReconfigVM_Task(config_spec)
         self.worker.wait_for_tasks([task])
 
+    def attach_floppy_drive(self, name):
+        """Attaches floppy drive to the virtual machine."""
+        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        controller = None
+        floppy_device_key = 8000  # 800x reserved for floppies
+        # Find Super I/O controller and free device key
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualSIOController):
+                controller = device
+            if isinstance(device, vim.vm.device.VirtualFloppy):
+                floppy_device_key = int(device.key) + 1
+
+        floppyspec = vim.vm.device.VirtualDeviceSpec()
+        floppyspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        floppyspec.device = vim.vm.device.VirtualFloppy(deviceInfo=vim.Description(
+                label='Floppy drive 1', summary='Remote device'))
+        floppyspec.device.key = floppy_device_key
+        floppyspec.device.controllerKey = controller.key
+
+        floppyspec.device.backing = vim.vm.device.VirtualFloppy.RemoteDeviceBackingInfo(
+                deviceName='', useAutoDetect=False)
+
+        floppyspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
+                startConnected=False, allowGuestControl=True, connected=False, status='untried')
+
+        config_spec = vim.vm.ConfigSpec(deviceChange=[floppyspec])
+        self.logger.info('Attaching device to the virtual machine...')
+        task = vm.ReconfigVM_Task(config_spec)
+        self.worker.wait_for_tasks([task])
+
+    def attach_cdrom_drive(self, name):
+        """Attaches cd/dvd drive to the virtual machine."""
+        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        controller = None
+        cdrom_device_key = 3000  # 300x reserved for cd/dvd drives in vmware
+        # Find last IDE controller and free device key
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualIDEController):
+                controller = device
+            if isinstance(device, vim.vm.device.VirtualCdrom):
+                cdrom_device_key = int(device.key) + 1
+
+        cdspec = vim.vm.device.VirtualDeviceSpec()
+        cdspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        cdspec.device = vim.vm.device.VirtualCdrom(deviceInfo=vim.Description(
+                label='CD/DVD drive 1', summary='Remote device'))
+        cdspec.device.key = cdrom_device_key
+        cdspec.device.controllerKey = controller.key
+
+        cdspec.device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo(
+                deviceName='', useAutoDetect=False, exclusive=False)
+
+        cdspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
+                startConnected=False, allowGuestControl=True, connected=False, status='untried')
+
+        config_spec = vim.vm.ConfigSpec(deviceChange=[cdspec])
+        self.logger.info('Attaching device to the virtual machine...')
+        task = vm.ReconfigVM_Task(config_spec)
+        self.worker.wait_for_tasks([task])
 
 
 class ModifyCommands(BaseCommands):
