@@ -823,7 +823,7 @@ class ModifyCommands(BaseCommands):
             config_spec = vim.vm.ConfigSpec(deviceChange=[nicspec])
             self.logger.info("Attaching network {} to VM's device {}...".format(net, dev))
             task = vm.ReconfigVM_Task(config_spec)
-            self.worker.wait_for_tasks(content, [task])
+            self.worker.wait_for_tasks([task])
         else:
             raise VmCLIException('Unable to find any ethernet devices on a specified target!')
 
@@ -888,14 +888,15 @@ class PowerCommands(BaseCommands):
     @args('--show', help='show power state of a vm', action='store_true')
     def execute(self, args):
         if args.on:
-            self.poweron_vm(name)
+            self.poweron_vm(args.name)
         elif args.off:
-            self.poweroff_vm(name)
+            self.poweroff_vm(args.name)
         elif args.reboot:
-            self.reboot_vm(name)
+            self.reboot_vm(args.name)
         elif args.reset:
-            self.reset_vm(name)
+            self.reset_vm(args.name)
         elif args.show:
+            vm = self.get_obj([VMWARE_TYPES['vm']], args.name)
             print(vm.runtime.powerState)
 
     def poweron_vm(self, name):
@@ -938,8 +939,7 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--guest-user', help="guest's user under which to run command")
     @args('--guest-pass', help="guest user's password")
     def execute(self, args):
-        if args.flavor:
-            flavor = load_vm_flavor(args.flavor)
+        flavor = load_vm_flavor(args.flavor)
 
         # load needed variables
         name = args.name
