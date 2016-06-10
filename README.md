@@ -1,18 +1,19 @@
 Description
 -----------
-Vmcli aims to deliver command line tool to allow virtual machine management and delivery by interacting with VMware's vSphere API. It implements simple methods and classes to allow expansion of modules, making addition of new vmcli subcommands easy as inheriting classes in the Python programming language.
+Vmcli aims to provide command line tool to allow virtual machine management and delivery by interacting with VMware's vSphere API. It implements simple methods and classes for modules expansion, making addition of new vmcli subcommands easy as inheriting classes in the Python programming language.
 
-Other aim is to make as much directives configurable as possible. Options can be provided via default values, command line options, configuration file directives and environment variables. For create or clone subcommands there are flavors too.
+Other aim is to make as much directives configurable as possible. Options can be provided via default values, command line arguments, configuration file directives and environment variables. For the create or clone subcommands there are flavors too, these represents templates for virtual machine's hardware configuration.
 
 Installation
 ------------
 
 To begin using vmcli you need to have python2.7, python-virtualenv and python-pip packages installed. Then execute the following steps:
-
+```
   virtualenv env
   source env/bin/activate
   pip install -r requirements.txt
   vmcli.py --help
+```
 
 Configuration directives
 ------------------------
