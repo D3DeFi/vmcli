@@ -83,6 +83,8 @@ VM_DATASTORE        = get_config('deploy', 'datastore', 'VMCLI_VM_DATASTORE', st
 VM_CLUSTER          = get_config('deploy', 'cluster', 'VMCLI_VM_CLUSTER', str, None)
 VM_RESOURCE_POOL    = get_config('deploy', 'resource_pool', 'VMCLI_VM_RESOURCE_POOL', str, None)
 
+VM_ADDITIONAL_CMDS  = get_config('deploy', 'additional_commands', '', list, None)
+
 # Guest information
 # Login information used to access guests operating system
 VM_GUEST_USER       = get_config('guest', 'guest_user', 'VMCLI_GUEST_USER', str, None)
@@ -920,6 +922,7 @@ class PowerCommands(BaseCommands):
         self.worker.wait_for_tasks([vm.ResetVM_Task()])
 
 
+# TODO: should the bundle fail, provide option to rerun from failed command e.g. ansibles site.retry
 class CreateVmCommandBundle(BaseCommands):
     """execute series of tasks necessary to deploy new vm via cloning."""
 
@@ -1001,6 +1004,8 @@ class CreateVmCommandBundle(BaseCommands):
                     '/bin/ip addr add {} brd + dev eth0'.format(ip_addr),
                     '/bin/ip route add default via {}'.format(gateway)
                 ]
+                if VM_ADDITIONAL_CMDS:
+                    commands.extend(VM_ADDITIONAL_CMDS)
 
                 execute.exec_inside_vm(name, commands, guest_user, guest_pass, wait_for_tools=True)
 
