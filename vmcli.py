@@ -83,7 +83,7 @@ VM_DATASTORE        = get_config('deploy', 'datastore', 'VMCLI_VM_DATASTORE', st
 VM_CLUSTER          = get_config('deploy', 'cluster', 'VMCLI_VM_CLUSTER', str, None)
 VM_RESOURCE_POOL    = get_config('deploy', 'resource_pool', 'VMCLI_VM_RESOURCE_POOL', str, None)
 
-VM_ADDITIONAL_CMDS  = get_config('deploy', 'additional_commands', '', list, None)
+VM_ADDITIONAL_CMDS  = get_config('deploy', 'additional_commands', '', str, None)
 
 # Guest information
 # Login information used to access guests operating system
@@ -579,7 +579,7 @@ class AttachCommands(BaseCommands):
     @args('--size', help='size of a disk to attach in gigabytes (hdd only)', type=int)
     def attach_hdd(self, name, size):
         """Attaches disk to a virtual machine. If no SCSI controller is present, then it is attached as well."""
-        if not args.size or args.size < VM_MIN_HDD or args.size > VM_MAX_HDD:
+        if not size or size < VM_MIN_HDD or size > VM_MAX_HDD:
             raise VmCLIException('Hdd size must be between {}-{}'.format(VM_MIN_HDD, VM_MAX_HDD))
 
         vm = self.get_obj([VMWARE_TYPES['vm']], name)
@@ -990,6 +990,10 @@ class CreateVmCommandBundle(BaseCommands):
 
         # Configure first ethernet device on the host, assumes traditional naming scheme
         if net_cfg:
+            # assume prefix 24 if user forgots
+            if len(net_cfg.split('/')) == 1:
+                net_cfg += '/24'
+
             try:
                 ip = netaddr.IPNetwork(net_cfg)
                 gateway = list(ip)[1]
@@ -1005,7 +1009,7 @@ class CreateVmCommandBundle(BaseCommands):
                     '/bin/ip route add default via {}'.format(gateway)
                 ]
                 if VM_ADDITIONAL_CMDS:
-                    commands.extend(VM_ADDITIONAL_CMDS)
+                    commands.extend(VM_ADDITIONAL_CMDS.split(';'))
 
                 execute.exec_inside_vm(name, commands, guest_user, guest_pass, wait_for_tools=True)
 

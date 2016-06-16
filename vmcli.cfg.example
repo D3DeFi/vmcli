@@ -46,10 +46,7 @@
 
 # Additional commands to run in VM after deployment (if guest login credentials were given)
 # USE absolute paths for executables !! Otherwise vmtools will throw errors
-#additional_commands = [
-#    "/bin/echo 'my-ssh-key' >> /root/.ssh/authorized_keys",
-#    "/bin/echo 'generic-hostname' > /etc/hostname"
-#]
+#additional_commands = /bin/echo 'my-ssh-key' >> /root/.ssh/authorized_keys; /bin/echo 'generic-hostname' > /etc/hostname
 
 [guest]
 # Login information used to access guest's operating system via vmtools
