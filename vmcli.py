@@ -70,6 +70,7 @@ VM_TOOLS_TIMEOUT    = get_config('timeouts', 'tools_timeout', None, int, 20)
 # or flavor specification is present.
 VM_CPU              = get_config('deploy', 'cpu', 'VMCLI_VM_CPU', int, None)
 VM_MEM              = get_config('deploy', 'mem', 'VMCLI_VM_MEM', int, None)
+VM_DISK             = get_config('deploy', 'disk', 'VMCLI_VM_DISK', int, None)
 VM_NETWORK          = get_config('deploy', 'network', 'VMCLI_VM_NETWORK', str, None)
 VM_NETWORK_CFG      = get_config('deploy', 'network_cfg', 'VMCLI_VM_NETWORK_CFG', str, None)
 VM_TEMPLATE         = get_config('deploy', 'template', 'VMCLI_VM_TEMPLATE', str, None)
@@ -562,8 +563,6 @@ class AttachCommands(BaseCommands):
     def execute(self, args):
         try:
             if args.type == 'hdd':
-                if not args.size or args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
-                    raise VmCLIException('Size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
                 self.attach_disk(args.name, args.size)
             elif args.type == 'network':
                 self.attach_net_adapter(args.name, args.net)
@@ -578,6 +577,9 @@ class AttachCommands(BaseCommands):
     @args('--size', help='size of a disk to attach in gigabytes (hdd only)', type=int)
     def attach_disk(self, name, size):
         """Attaches disk to a virtual machine. If no SCSI controller is present, then it is attached as well."""
+        if not args.size or args.size < VM_MIN_DISK or args.size > VM_MAX_DISK:
+            raise VmCLIException('Hdd size must be between {}-{}'.format(VM_MIN_DISK, VM_MAX_DISK))
+
         vm = self.get_obj([VMWARE_TYPES['vm']], name)
 
         disks = []
@@ -934,6 +936,7 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--resource-pool', help='resource pool, which should be used for vm')
     @args('--mem', help='memory to set for a vm in megabytes', type=int)
     @args('--cpu', help='cpu count to set for a vm', type=int)
+    @args('--disk', help='size of additional hdd to attach in gigabytes', type=int)
     @args('--net', help='network to attach to the vm')
     @args('--net-cfg', help="network configuration. E.g --net-cfg '10.1.10.2/24'")
     @args('--guest-user', help="guest's user under which to run command")
@@ -951,6 +954,7 @@ class CreateVmCommandBundle(BaseCommands):
         resource_pool = args.resource_pool or flavor.get('resource_pool', None) or VM_RESOURCE_POOL
         mem = args.mem or flavor.get('mem', None) or VM_MEM
         cpu = args.cpu or flavor.get('cpu', None) or VM_CPU
+        disk = args.disk or flavor.get('disk', None) or VM_DISK
         net = args.net or flavor.get('net', None) or VM_NETWORK
         net_cfg = args.net_cfg or flavor.get('net_cfg', None) or VM_NETWORK_CFG
         guest_user = args.guest_user or VM_GUEST_USER
@@ -963,6 +967,7 @@ class CreateVmCommandBundle(BaseCommands):
         clone = CloneCommands()
         modify = ModifyCommands()
         power = PowerCommands()
+        attach = AttachCommands()
         execute = ExecCommands()
 
         # Clone virtual machine and leave it powered off
@@ -973,6 +978,8 @@ class CreateVmCommandBundle(BaseCommands):
         if net:
             # TODO: dev is ignored at the moment, but there will be eth0 in the future
             modify.change_network(name, net, dev=None)
+        if disk:
+            attach.attach_disk(name, disk)
         # Power on freshly cloned virtual machine
         power.poweron_vm(name)
         # Wait for guest OS to boot up
