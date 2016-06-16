@@ -28,9 +28,9 @@
 #cpu = 1
 # Virtual machine memory in megabytes
 #mem = 512
-# Attach additional disk with specified size in gigabytes
+# Attach additional hdd with specified size in gigabytes
 # If VM is created via cloning, than disks will be cloned as well and specifying this option will attach additional disk
-#disk = 15
+#hdd = 15
 # Network defined in vCenter to attach to first interface of a vm
 #network = dvPortGroup10
 # Network configuration to apply to first interface of a vm. Gateway and broadcast will be parsed automatically
