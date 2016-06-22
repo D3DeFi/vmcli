@@ -54,3 +54,6 @@ class ExecCommands(BaseCommands):
                     raise VmCLIException(e.msg + '. Try providing absolute path to the binary.')
         except vim.fault.InvalidGuestLogin as e:
             raise VmCLIException(e.msg)
+
+
+BaseCommands.register('exec', ExecCommands)

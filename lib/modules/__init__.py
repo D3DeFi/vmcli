@@ -22,7 +22,7 @@ def module_loader(file_name):
     base_dir = os.path.dirname(os.path.dirname(file_name))
     modules_dir = os.path.join(base_dir, 'lib/modules/')
     modules_dir = os.listdir(modules_dir)
-    # registered subcomands will be added into COMMANDS directory upon import
+    # registered subcomands will be added into COMMANDS dictionary upon import
     for module in modules_dir:
         # do not process __init__.py file and cache files ending with .pyc
         if not (module.startswith('_') or module.endswith('.pyc')):
