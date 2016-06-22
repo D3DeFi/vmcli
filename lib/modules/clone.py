@@ -6,7 +6,6 @@ from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 
 import lib.config as conf
-from lib.constants import VMWARE_TYPES
 
 
 class CloneCommands(BaseCommands):
@@ -47,7 +46,7 @@ class CloneCommands(BaseCommands):
         # Access objects associated with the provided names
         try:
             vm = None
-            vm = self.get_obj([VMWARE_TYPES['vm']], name)
+            vm = self.get_obj('vm', name)
         except VmCLIException:
             pass
         finally:
@@ -55,19 +54,19 @@ class CloneCommands(BaseCommands):
                 raise VmCLIException('Object with name {} already exists, cannot clone!'.format(name))
 
         try:
-            template = self.get_obj([VMWARE_TYPES['vm']], template)
+            template = self.get_obj('vm', template)
         except VmCLIException:
             raise VmCLIException('Template {} was not found, cannot clone!'. format(template))
 
-        datacenter = self.get_obj([VMWARE_TYPES['datacenter']], datacenter, default=True)
+        datacenter = self.get_obj('datacenter', datacenter, default=True)
         self.logger.info('  * Using datacenter {}'.format(datacenter.name))
-        cluster = self.get_obj([vim.ClusterComputeResource], cluster, default=True)
+        cluster = self.get_obj('cluster', cluster, default=True)
         self.logger.info('  * Using cluster {}'.format(cluster.name))
-        folder = self.get_obj([VMWARE_TYPES['folder']], folder) or datacenter.vmFolder
+        folder = self.get_obj('folder', folder) or datacenter.vmFolder
         self.logger.info('  * Using folder {}'.format(folder.name))
-        datastore = self.get_obj([VMWARE_TYPES['datastore']], datastore or template.datastore[0].info.name)
+        datastore = self.get_obj('datastore', datastore or template.datastore[0].info.name)
         self.logger.info('  * Using datastore {}'.format(datastore.name))
-        resource_pool = self.get_obj([VMWARE_TYPES['resource_pool']], resource_pool) or cluster.resourcePool
+        resource_pool = self.get_obj('resource_pool', resource_pool) or cluster.resourcePool
         self.logger.info('  * Using resource pool {}'.format(resource_pool.name))
         # build object with copy specification
         relocspec = vim.vm.RelocateSpec()

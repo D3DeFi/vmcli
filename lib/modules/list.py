@@ -12,7 +12,7 @@ class ListCommands(BaseCommands):
     @args('type', help='for which type of objects to search', choices=[key for key in VMWARE_TYPES.keys()])
     def execute(self, args):
         if args.name:
-            self.show_item([VMWARE_TYPES[args.type]], args.name)
+            self.show_item(args.type, args.name)
         else:
             self.list_items([VMWARE_TYPES[args.type]])
 

@@ -18,7 +18,8 @@ VMWARE_TYPES = {
     'datastore': vim.Datastore,
     'datastore_cluster': vim.StoragePod,
     'resource_pool': vim.ResourcePool,
-    'network': vim.dvs.DistributedVirtualPortgroup
+    'network': vim.dvs.DistributedVirtualPortgroup,
+    'dvs_portgroup': vim.dvs.DistributedVirtualPortgroup
 }
 
 VM_MIN_CPU = 1

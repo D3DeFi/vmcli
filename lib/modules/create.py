@@ -68,8 +68,8 @@ class CreateEmptyVmCommands(BaseCommands):
         config_spec.guestId = 'otherLinux64Guest'
         config_spec.version = 'vmx-08'
 
-        folder = self.get_obj([c.VMWARE_TYPES['folder']], folder)
-        resource_pool = self.get_obj([c.VMWARE_TYPES['resource_pool']], resource_pool)
+        folder = self.get_obj('folder', folder)
+        resource_pool = self.get_obj('resource_pool', resource_pool)
         task = folder.CreateVM_Task(config=config_spec, pool=resource_pool)
         self.wait_for_tasks([task])
 
@@ -138,7 +138,7 @@ class CreateVmCommandBundle(BaseCommands):
         # Power on freshly cloned virtual machine
         power.poweron_vm(name)
         # Wait for guest OS to boot up
-        self.wait_for_guest_os(self.get_obj([c.VMWARE_TYPES['vm']], name))
+        self.wait_for_guest_os(self.get_obj('vm', name))
 
         # Configure first ethernet device on the host, assumes traditional naming scheme
         if net_cfg:

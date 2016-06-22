@@ -1,9 +1,6 @@
 from lib.modules import BaseCommands
 from lib.tools.argparser import args
 
-# TODO: reduce number of VMWARE_TYPES imports across modules
-from lib.constants import VMWARE_TYPES
-
 
 class PowerCommands(BaseCommands):
     """run power action on a specific vm."""
@@ -27,26 +24,26 @@ class PowerCommands(BaseCommands):
         elif args.reset:
             self.reset_vm(args.name)
         elif args.show:
-            vm = self.get_obj([VMWARE_TYPES['vm']], args.name)
+            vm = self.get_obj('vm', args.name)
             print(vm.runtime.powerState)
 
     def poweron_vm(self, name):
-        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         if vm.runtime.powerState == 'poweredOff':
             self.wait_for_tasks([vm.PowerOnVM_Task()])
 
     def poweroff_vm(self, name):
-        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         # TODO: there is no runtime when vm is turned off ?
         if vm.runtime.powerState == 'poweredOn':
             self.wait_for_tasks([vm.PowerOffVM_Task()])
 
     def reboot_vm(self, name):
-        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         self.wait_for_tasks([vm.RebootGuest()])
 
     def reset_vm(self, name):
-        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         self.wait_for_tasks([vm.ResetVM_Task()])
 
 

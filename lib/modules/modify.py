@@ -29,7 +29,7 @@ class ModifyCommands(BaseCommands):
     @args('--cpu', help='cpu count to set for a vm', type=int)
     def change_hw_resource(self, name, mem=None, cpu=None):
         """Changes hardware resource of a specific VM."""
-        vm = self.get_obj([c.VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         if not mem and not cpu:
             raise VmCLIException('Neither memory or cpu specified! Cannot run hardware reconfiguration.')
 
@@ -55,7 +55,7 @@ class ModifyCommands(BaseCommands):
     @args('--dev', help='device to attach provided network to')
     def change_network(self, name, net, dev):
         """Changes network associated with a specifc VM's network interface."""
-        vm = self.get_obj([c.VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         nicspec = None
         # search for Ethernet devices
         self.logger.info('Searching for ethernet devices attached to vm...')
@@ -68,7 +68,7 @@ class ModifyCommands(BaseCommands):
                 nicspec.device = device
 
                 # locate network, which should be assigned to device
-                network = self.get_obj([vim.dvs.DistributedVirtualPortgroup], net)
+                network = self.get_obj('dvs_portgroup', net)
                 if not network:
                     raise VmCLIException('Unable to find provided network {}'.format(net))
 

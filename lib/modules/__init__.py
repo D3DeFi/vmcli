@@ -8,6 +8,7 @@ from lib.tools.logger import logger
 from lib.exceptions import VmCLIException
 
 from lib.config import VM_OS_TIMEOUT, VM_TOOLS_TIMEOUT
+from lib.constants import VMWARE_TYPES
 
 
 # Object containing registered subcommands to be available to user. Dictionary is used in command line argument
@@ -56,9 +57,13 @@ class BaseCommands(object):
     def get_obj(self, vimtype, name, default=False):
         """Gets the vsphere object associated with a given text name.
         If default is set to True and name does not match, return first object found."""
+        vimtype = VMWARE_TYPES.get(vimtype, None)
+        if not vimtype:
+            raise VmCLIException('Provided type does not match any existing VMware object types!')
+
         # TODO: make cache or find better way to retreive objects + destroy view object (it is huge in mem)
         # Create container view containing object found
-        container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
+        container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
         if name is not None:
             self.logger.info('Loading VMware object: {}'.format(name))
             for view in container.view:

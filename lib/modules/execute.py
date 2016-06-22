@@ -6,7 +6,6 @@ from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 
 import lib.config as conf
-from lib.constants import VMWARE_TYPES
 
 
 class ExecCommands(BaseCommands):
@@ -30,7 +29,7 @@ class ExecCommands(BaseCommands):
         """Runs provided command inside guest's operating system."""
         guest_user = guest_user or conf.VM_GUEST_USER
         guest_pass = guest_pass or conf.VM_GUEST_PASS
-        vm = self.get_obj([VMWARE_TYPES['vm']], name)
+        vm = self.get_obj('vm', name)
         if not commands:
             raise VmCLIException('No command provided for execution!')
 
