@@ -37,7 +37,7 @@ class AttachCommands(BaseCommands):
     def attach_hdd(self, name, size):
         """Attaches disk to a virtual machine. If no SCSI controller is present, then it is attached as well."""
         if not size or size < VM_MIN_HDD or size > VM_MAX_HDD:
-            raise VmCLIException('Hdd size must be between {}-{}'.format VM_MIN_HDD, VM_MAX_HDD))
+            raise VmCLIException('Hdd size must be between {}-{}'.format(VM_MIN_HDD, VM_MAX_HDD))
 
         vm = self.get_obj('vm', name)
 
