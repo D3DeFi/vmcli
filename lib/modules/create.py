@@ -140,6 +140,7 @@ class CreateVmCommandBundle(BaseCommands):
         # Wait for guest OS to boot up
         self.wait_for_guest_os(self.get_obj('vm', name))
 
+        # TODO: wrong logic, additional commands should be executed even if net_cfg is not defined
         # Configure first ethernet device on the host, assumes traditional naming scheme
         if net_cfg:
             # assume prefix 24 if user forgots
@@ -161,7 +162,7 @@ class CreateVmCommandBundle(BaseCommands):
                     '/bin/ip route add default via {}'.format(gateway)
                 ]
                 if conf.VM_ADDITIONAL_CMDS:
-                    commands.extend(conf.VM_ADDITIONAL_CMDS.split(';'))
+                    commands.extend(conf.VM_ADDITIONAL_CMDS)
 
                 execute.exec_inside_vm(name, commands, guest_user, guest_pass, wait_for_tools=True)
 

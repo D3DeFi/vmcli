@@ -64,7 +64,7 @@ VM_DATASTORE        = get_config('deploy', 'datastore', 'VMCLI_VM_DATASTORE', st
 VM_CLUSTER          = get_config('deploy', 'cluster', 'VMCLI_VM_CLUSTER', str, None)
 VM_RESOURCE_POOL    = get_config('deploy', 'resource_pool', 'VMCLI_VM_RESOURCE_POOL', str, None)
 
-VM_ADDITIONAL_CMDS  = get_config('deploy', 'additional_commands', '', str, None)
+VM_ADDITIONAL_CMDS  = get_config('deploy', 'additional_commands', '', list, None)
 
 # Guest information
 # Login information used to access guests operating system

@@ -25,12 +25,10 @@ def module_loader(file_name):
     modules_dir = os.listdir(modules_dir)
     # registered subcomands will be added into COMMANDS dictionary upon import
     for module in modules_dir:
-        # do not process __init__.py file and cache files ending with .pyc
-        if not (module.startswith('_') or module.endswith('.pyc')):
+        # do not process __init__.py file and everything else not ending with .py
+        if not module.startswith('_') and module.endswith('.py'):
             # remove .py extensions
-            if module.endswith('.py'):
-                module = module[:-3]
-
+            module = module[:-3]
             import_module('lib.modules.{}'.format(module))
 
     return COMMANDS

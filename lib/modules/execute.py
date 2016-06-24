@@ -41,7 +41,6 @@ class ExecCommands(BaseCommands):
 
         try:
             credentials = vim.vm.guest.NamePasswordAuthentication(username=guest_user, password=guest_pass)
-            # TODO: make commands same way as VM_ADDITIONAL_CMDS from config file (delimited by ;)
             for cmd in commands:
                 executable = cmd.split()[0].lstrip()
                 arguments = ' '.join(cmd.split()[1:])
