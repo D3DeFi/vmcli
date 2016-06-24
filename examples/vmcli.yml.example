@@ -1,0 +1,35 @@
+logging:
+    log_path: ./vmcli.log                                # where to store logs
+    log_level: WARNING                                   # choices: DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET (no logging)
+    log_format: "%(asctime)s %(levelname)s %(message)s"  # see https://docs.python.org/2/library/logging.html#logrecord-attributes
+
+authentication:
+    username: test                                       # login credentials for vCenter connection
+    password: test                                       # if omitted (both in config file and ENV), user will be prompted
+    vcenter: test                                        # vCenter server to connect to
+    insecure_connection: False                           # skip SSL certs verification
+
+timeouts:
+    os_timeout: 120                                      # seconds to wait for guest's OS to bootx up
+    tools_timeout: 20                                    # seconds to wait for vmtools after bootup
+
+deploy:
+    cpu: 1                                               # number of processors for VM
+    mem: 512                                             # megabytes of virtual memory
+    hdd: 15                                              # gigabytes to attach as a new additional disk
+    network: dvPortGroup10                               # network in vCenter to attach to the first NIC on VM
+    network_cfg: 10.1.10.2/24                            # nw config to apply to the first NIC (gw and brd parsed automatically)
+    template: template-vm.example.com                    # template to use if clone operation is used for deploy
+    poweron: True                                        # whether to power on server after deploy
+    datacenter: dc01                                     # datacenter where to deploy VM
+    folder: Production                                   # folder where to place VM
+    datastore: ds01                                      # datastore where to place VM files
+    cluster: cl01                                        # which cluster in datacenter to use 
+    resource_pool: /Resources                            # resource pool to use for VM
+    additional_commands:                                 # cmds(full paths) to run inside VM after deploy (requires guest credentials)
+      - /bin/echo 'my-ssh-key' >> /root/.ssh/authorized_keys
+      - /bin/echo 'generic-hostname' > /etc/hostname
+
+guest:
+    guest_user: root                                     # guest's user inside VM
+    guest_pass: toor                                     # password for guest's user

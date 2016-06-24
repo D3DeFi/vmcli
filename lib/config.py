@@ -1,5 +1,5 @@
 import os
-import ConfigParser
+import yaml
 
 
 def get_config(section, key, env_var, var_type, default=None):
@@ -7,21 +7,22 @@ def get_config(section, key, env_var, var_type, default=None):
     the exact order. This directives could be overriden via command line arguments."""
     value = os.getenv(env_var, None)
     if not value:
-        if CONFIG_FILE:
-            try:
-                return var_type(CONFIG_PARSER.get(section, key))
-            except (ConfigParser.NoOptionError, ConfigParser.NoSectionError, ValueError):
-                return default
+        try:
+            section = CONFIG_FILE.get(section, None)
+            return var_type(section[key])
+        except (AttributeError, KeyError, TypeError):
+            return default
     else:
         return value
     return default
 
 
-# Spawn config file parser
-CONFIG_PARSER = ConfigParser.RawConfigParser()
 # If path to configuration file is not provided via environment variable VMCLI_CONFIG_FILE, an attempt is
 # made to load locally present file named 'vmcli.cfg'.
-CONFIG_FILE = CONFIG_PARSER.read(os.getenv('VMCLI_CONFIG_FILE', None) or 'vmcli.cfg')
+try:
+    CONFIG_FILE = yaml.load(file(os.getenv('VMCLI_CONFIG_FILE', None) or 'vmcli.cfg' or ''))
+except IOError:
+    CONFIG_FILE = None
 
 # Loading of configuration directives is handled by get_config function
 # These directives are default settings used within program when used directive is not provided via command line
