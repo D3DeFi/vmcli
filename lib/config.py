@@ -18,9 +18,9 @@ def get_config(section, key, env_var, var_type, default=None):
 
 
 # If path to configuration file is not provided via environment variable VMCLI_CONFIG_FILE, an attempt is
-# made to load locally present file named 'vmcli.cfg'.
+# made to load locally present file named 'vmcli.yml'.
 try:
-    CONFIG_FILE = yaml.load(file(os.getenv('VMCLI_CONFIG_FILE', None) or 'vmcli.cfg' or ''))
+    CONFIG_FILE = yaml.load(file(os.getenv('VMCLI_CONFIG_FILE', None) or 'vmcli.yml' or ''))
 except IOError:
     CONFIG_FILE = None
 
