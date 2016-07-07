@@ -1,4 +1,4 @@
 *.pyc
 env/
 *.swp
-vmcli.cfg
+vmcli.yml
