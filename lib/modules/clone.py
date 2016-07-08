@@ -64,7 +64,7 @@ class CloneCommands(BaseCommands):
         self.logger.info('  * Using cluster {}'.format(cluster.name))
         folder = self.get_obj('folder', folder) or datacenter.vmFolder
         self.logger.info('  * Using folder {}'.format(folder.name))
-        datastore = self.get_obj('datastore', datastore or template.datastore[0].info.name)
+        datastore = self.get_obj('datastore', datastore) or self.get_obj('datastore', template.datastore[0].info.name)
         self.logger.info('  * Using datastore {}'.format(datastore.name))
         resource_pool = self.get_obj('resource_pool', resource_pool) or cluster.resourcePool
         self.logger.info('  * Using resource pool {}'.format(resource_pool.name))
