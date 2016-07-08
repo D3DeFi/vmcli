@@ -1,4 +1,3 @@
-import sys
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -22,8 +21,7 @@ class ExecCommands(BaseCommands):
         try:
             self.exec_inside_vm(args.name, args.cmd, args.guest_user, args.guest_pass, wait_for_tools=True)
         except VmCLIException as e:
-            self.logger.error(e.message)
-            sys.exit(4)
+            self.exit(e.message, errno=4)
 
     def exec_inside_vm(self, name, commands, guest_user=None, guest_pass=None, wait_for_tools=False):
         """Runs provided command inside guest's operating system."""

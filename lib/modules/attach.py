@@ -1,4 +1,3 @@
-import sys
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -29,9 +28,7 @@ class AttachCommands(BaseCommands):
             elif args.type == 'cdrom':
                 self.attach_cdrom_drive(args.name)
         except VmCLIException as e:
-            self.logger.error(e.message)
-            # TODO: provide self.exit in BaseCommands class
-            sys.exit(5)
+            self.exit(e.message, errno=5)
 
     @args('--size', help='size of a disk to attach in gigabytes (hdd only)', type=int)
     def attach_hdd(self, name, size):

@@ -1,4 +1,3 @@
-import sys
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -21,8 +20,7 @@ class CloneCommands(BaseCommands):
             self.clone_vm(args.name, args.template, args.datacenter, args.folder,
                     args.datastore, args.cluster, args.resource_pool, args.poweron)
         except VmCLIException as e:
-            self.logger.error(e.message)
-            sys.exit(2)
+            self.exit(e.message, errno=2)
 
     @args('--datacenter', help='datacenter where to create vm')
     @args('--folder', help='folder where to place vm')

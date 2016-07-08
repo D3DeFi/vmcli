@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from collections import OrderedDict
 from importlib import import_module
@@ -164,3 +165,12 @@ class BaseCommands(object):
                 return False
             time.sleep(5)
             time_wait += 5
+
+    def exit(self, msg, errno=1):
+        """Provides way to fail during execution."""
+        self.logger.error(msg)
+        try:
+            int(errno)
+            sys.exit(errno)
+        except ValueError:
+            sys.exit(1)

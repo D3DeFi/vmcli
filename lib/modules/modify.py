@@ -1,4 +1,3 @@
-import sys
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -20,8 +19,7 @@ class ModifyCommands(BaseCommands):
             try:
                 self.change_hw_resource(args.name, args.mem, args.cpu)
             except VmCLIException as e:
-                self.logger.error(e.message)
-                sys.exit(3)
+                self.exit(e.message, errno=3)
         elif args.net and args.dev:
             self.change_network(args.name, args.net, args.dev)
 
