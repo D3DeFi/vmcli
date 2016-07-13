@@ -17,11 +17,22 @@ To begin using vmcli you need to have python2.7, python-virtualenv and python-pi
 
 Configuration directives
 ------------------------
- - command line arguments
- - ENV variable
- - config file
- - default
- - flavor setting (if present)
+
+Options can be provided and overriden in a variety of ways. Foremost being command line arguments. Specific ways to provide configuration to the vmcli program are explained below <strong>in the exact order as they are prioritized.</strong>
+
+### 1. Command line arguments
+
+Arguments being most straightforward way to pass configuration options to the running program. All the available command line arguments can be found via --help argument passed to the program like this - ```vmcli.py --help```.
+
+Help argument (--help) can be passed to any subcommand as well. Available subcommands of the vmcli program are listed in the positional arguments section of the help output delivered by main program (shown with the command above).
+
+### 2. Flavors (For clone and create operations only)
+
+Flavors are specific feature for virtual machine deploy operations such as create, create-empty or clone. They work similar to flavors used in any other tools or virtualization platforms (OpenStack's flavors, AWS's instance types, etc.) and can be defined by the user himself. 
+
+### 3. Environment variables
+### 4. Config file (yaml)
+### 5. Default values
 
 Examples
 --------
@@ -31,8 +42,7 @@ Adding new/modifying commands
 
 TODO
 ----
- - Flavors
- - CommandSuites
+
  - datastore-cluster instead of single datastore
  - implement cache to speed up get_obj calls
  - upload /etc/network/interfaces
