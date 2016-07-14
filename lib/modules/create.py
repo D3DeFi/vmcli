@@ -125,7 +125,7 @@ class CreateVmCommandBundle(BaseCommands):
         attach = AttachCommands(self.connection)
         execute = ExecCommands(self.connection)
 
-        clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, poweron=False. mem, cpu)
+        clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, False. mem, cpu)
 
         if net:
             # TODO: dev is ignored at the moment, but there will be eth0 in the future
