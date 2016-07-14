@@ -64,10 +64,8 @@ class BaseCommands(object):
         # Create container view containing object found
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
         if name is not None:
-            self.logger.info('Loading VMware object: {}'.format(name))
             for view in container.view:
                 if view.name == name:
-                    self.logger.debug('Found matching object {}'.format(view))
                     return view
 
         # If searched object is not found and default is True, provide first instance found

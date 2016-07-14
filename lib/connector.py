@@ -34,7 +34,7 @@ def connect(vcenter=None, username=None, password=None, insecure=None):
 
     connection = None
     try:
-        logger.info('Trying to connect to {} ...'.format(vcenter))
+        logger.info('Trying to connect to {}...'.format(vcenter))
         # Load connection object into global variable
         connection = SmartConnect(host=vcenter, user=username, pwd=password, sslContext=sslContext)
         # Register function to be executed at termination, eg. session cleanup
