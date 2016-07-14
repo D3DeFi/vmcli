@@ -43,7 +43,6 @@ Adding new/modifying commands
 TODO
 ----
 
- - datastore-cluster instead of single datastore
  - implement cache to speed up get_obj calls
  - upload /etc/network/interfaces
  - fix: list vm | grep <str> throws:

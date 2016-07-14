@@ -125,19 +125,15 @@ class CreateVmCommandBundle(BaseCommands):
         attach = AttachCommands(self.connection)
         execute = ExecCommands(self.connection)
 
-        # Clone virtual machine and leave it powered off
-        clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, poweron=False)
-        # If any, apply hardware changes to the virtual machine
-        if mem or cpu:
-            modify.change_hw_resource(name, mem, cpu)
+        clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, poweron=False. mem, cpu)
+
         if net:
             # TODO: dev is ignored at the moment, but there will be eth0 in the future
             modify.change_network(name, net, dev=None)
         if hdd:
             attach.attach_hdd(name, hdd)
-        # Power on freshly cloned virtual machine
+
         power.poweron_vm(name)
-        # Wait for guest OS to boot up
         self.wait_for_guest_os(self.get_obj('vm', name))
 
         # Configure first ethernet device on the host, assumes traditional naming scheme
