@@ -42,10 +42,12 @@ class CloneCommands(BaseCommands):
         mem = mem or flavor.get('mem', None) or conf.VM_MEM
         cpu = cpu or flavor.get('cpu', None) or conf.VM_CPU
         template = self.get_obj('vm', template or flavor.get('template', None) or conf.VM_TEMPLATE)
-        datacenter = self.get_obj('datacenter', datacenter or flavor.get('datacenter', None) or conf.VM_DATACENTER, default=True)
+        datacenter = self.get_obj('datacenter',
+            datacenter or flavor.get('datacenter', None) or conf.VM_DATACENTER, default=True)
         cluster = self.get_obj('cluster', cluster or flavor.get('cluster', None) or conf.VM_CLUSTER, default=True)
-        folder = self.get_obj('folder', folder or flavor.get('folder', None) or conf.VM_FOLDER)
-        resource_pool = self.get_obj('resource_pool', resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL)
+        folder = self.get_obj('folder', folder or flavor.get('folder', None) or conf.VM_FOLDER) or datacenter.vmFolder
+        resource_pool = self.get_obj('resource_pool',
+            resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL) or cluster.resourcePool
 
         # Search first for datastore cluster, then for specific datastore
         datastore = datastore or flavor.get('datastore', None) or conf.VM_DATASTORE
@@ -66,9 +68,6 @@ class CloneCommands(BaseCommands):
 
         if not template:
             self.exit('Template {} does not exists. Exiting...'.format(template.name))
-
-        if not folder or not resource_pool:
-            self.exit('Missing folder or resource pool in either argument, flavor, env variable or config file.')
 
         self.logger.info('  * Using datacenter..........{}'.format(datacenter.name))
         self.logger.info('  * Using cluster.............{}'.format(cluster.name))
