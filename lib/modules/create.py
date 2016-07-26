@@ -151,10 +151,16 @@ class CreateVmCommandBundle(BaseCommands):
                 self.logger.warning(str(e.message) + '. Skipping network configuration')
 
             if ip and gateway:
+                # ugly hack assuming templates should have just one interface. Only work for Debian at the moment
                 commands = [
-                    '/bin/ip addr flush dev eth0',
-                    '/bin/ip addr add {} brd + dev eth0'.format(ip_addr),
-                    '/bin/ip route add default via {}'.format(gateway)
+                    '/bin/cp /etc/network/interfaces /etc/network/interfaces.bak',
+                    "/bin/sed -i 's/allow-hotplug/auto/' /etc/network/interfaces",
+                    "/bin/sed -i 's/address .*/address {}/' /etc/network/interfaces".format(ip.ip),
+                    "/bin/sed -i 's/netmask .*/netmask {}/' /etc/network/interfaces".format(ip.netmask),
+                    "/bin/sed -i 's/network .*/network {}/' /etc/network/interfaces".format(ip.network),
+                    "/bin/sed -i 's/gateway .*/gateway {}/' /etc/network/interfaces".format(gateway),
+                    "/bin/sed -i 's/broadcast .*/broadcast {}/' /etc/network/interfaces".format(ip.broadcast),
+                    '/sbin/ifdown -a && /bin/sleep 1 && /sbin/ifup -a'
                 ]
                 execute.exec_inside_vm(name, commands, guest_user, guest_pass, wait_for_tools=True)
 
