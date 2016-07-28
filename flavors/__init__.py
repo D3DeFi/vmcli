@@ -9,7 +9,12 @@ def load_vm_flavor(name):
     if name:
         try:
             module = import_module('flavors.{}'.format(name))
-            return module.flavor
+            # Check if flavor is dictionary
+            if isinstance(module.flavor, dict):
+                return module.flavor
+            else:
+                logger.error('Defined flavor does not contain valid Python dictionary! Aborting...')
+                sys.exit(1)
         except ImportError as e:
             logger.error('No such flavor named {}!'.format(name))
             sys.exit(1)
