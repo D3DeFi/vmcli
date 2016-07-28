@@ -34,6 +34,7 @@ class CreateEmptyVmCommands(BaseCommands):
         flavor = load_vm_flavor(args.flavor)
         folder = args.folder or flavor.get('folder', None) or conf.VM_FOLDER
         resource_pool = args.resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL
+        # Add datastore-cluster support to create-empty operation
         datastore = args.datastore or flavor.get('datastore', None) or conf.VM_DATASTORE
         mem = args.mem or flavor.get('mem', None) or conf.VM_MEM
         cpu = args.cpu or flavor.get('cpu', None) or conf.VM_CPU

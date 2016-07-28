@@ -27,7 +27,6 @@ class ListCommands(BaseCommands):
     def show_item(self, vimtype, name):
         """Lists details about specific VMware object."""
         # TODO: format output
-        # TODO: if vm, use self.get_vm_obj - its faster
         obj = self.get_obj(vimtype, name, default=False)
         if obj:
             print obj.name, obj.configStatus, obj.overallStatus

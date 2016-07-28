@@ -34,7 +34,6 @@ class PowerCommands(BaseCommands):
 
     def poweroff_vm(self, name):
         vm = self.get_obj('vm', name)
-        # TODO: there is no runtime when vm is turned off ?
         if vm.runtime.powerState == 'poweredOn':
             self.wait_for_tasks([vm.PowerOffVM_Task()])
 
