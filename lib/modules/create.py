@@ -129,8 +129,8 @@ class CreateVmCommandBundle(BaseCommands):
         clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, False, mem, cpu)
 
         if net:
-            # TODO: dev is ignored at the moment, but there will be eth0 in the future
-            modify.change_network(name, net, dev=None)
+            # Change network assigned to the first interface on the VM
+            modify.change_network(name, net, dev=1)
         if hdd:
             attach.attach_hdd(name, hdd)
 

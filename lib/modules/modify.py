@@ -16,11 +16,8 @@ class ModifyCommands(BaseCommands):
     @args('--name', required=True, help='name of a object to modify')
     def execute(self, args):
         if args.mem or args.cpu:
-            try:
-                self.change_hw_resource(args.name, args.mem, args.cpu)
-            except VmCLIException as e:
-                self.exit(e.message, errno=3)
-        elif args.net and args.dev:
+            self.change_hw_resource(args.name, args.mem, args.cpu)
+        elif args.net or args.dev:
             self.change_network(args.name, args.net, args.dev)
 
     @args('--mem', help='memory to set for a vm in megabytes', type=int)
@@ -49,50 +46,48 @@ class ModifyCommands(BaseCommands):
         task = vm.ReconfigVM_Task(config_spec)
         self.wait_for_tasks([task])
 
-    @args('--net', help='network to attach to a network device')
-    @args('--dev', help='device to attach provided network to')
-    def change_network(self, name, net, dev):
+    @args('--net', required=True, help='network to attach to a network device')
+    @args('--dev', type=int, help='serial number of device to modify (e.g. 1 == eth0, 2 == eth1)')
+    def change_network(self, name, net, dev=1):
         """Changes network associated with a specifc VM's network interface."""
+        self.logger.info('Loading required VMware resources...')
         vm = self.get_obj('vm', name)
-        nicspec = None
+        # locate network, which should be assigned to device
+        network = self.get_obj('dvs_portgroup', net)
+        if not network:
+            raise VmCLIException('Unable to find provided network {}! Aborting...'.format(net))
+
         # search for Ethernet devices
         self.logger.info('Searching for ethernet devices attached to vm...')
+        nic_counter = 1
         for device in vm.config.hardware.device:
-            # TODO: let user decide , which nic to change and default to first
+            # Search for a specific network interfaces
             if isinstance(device, vim.vm.device.VirtualEthernetCard):
-                # build object with change specifications
-                nicspec = vim.vm.device.VirtualDeviceSpec()
-                nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                nicspec.device = device
+                if nic_counter != dev:
+                    nic_counter += 1
+                    continue
 
-                # locate network, which should be assigned to device
-                network = self.get_obj('dvs_portgroup', net)
-                if not network:
-                    raise VmCLIException('Unable to find provided network {}'.format(net))
-
-                dvs_port_conn = vim.dvs.PortConnection()
                 # use portGroupKey and DVS switch to build connection object
-                dvs_port_conn.portgroupKey = network.key
-                dvs_port_conn.switchUuid = network.config.distributedVirtualSwitch.uuid
+                dvs_port_conn = vim.dvs.PortConnection(
+                        portgroupKey=network.key, switchUuid=network.config.distributedVirtualSwitch.uuid)
 
                 # specify backing that connects device to a DVS switch portgroup
-                nicspec.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nicspec.device.backing.port = dvs_port_conn
+                device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo(port=dvs_port_conn)
                 # specify power status for nic
-                nicspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-                nicspec.device.connectable.connected = True
-                nicspec.device.connectable.startConnected = True
-                nicspec.device.connectable.allowGuestControl = True
-                break
+                device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
+                        connected=True, startConnected=True, allowGuestControl=True)
 
-        # create object containing final configuration specification, which to apply
-        if nicspec:
-            config_spec = vim.vm.ConfigSpec(deviceChange=[nicspec])
-            self.logger.info("Attaching network {} to VM's device {}...".format(net, dev))
-            task = vm.ReconfigVM_Task(config_spec)
-            self.wait_for_tasks([task])
-        else:
-            raise VmCLIException('Unable to find any ethernet devices on a specified target!')
+                # build object with change specifications
+                nicspec = vim.vm.device.VirtualDeviceSpec(device=device)
+                nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+
+                config_spec = vim.vm.ConfigSpec(deviceChange=[nicspec])
+                self.logger.info("Attaching network {} to VM's device {}...".format(net, dev))
+                task = vm.ReconfigVM_Task(config_spec)
+                self.wait_for_tasks([task])
+                return
+
+        raise VmCLIException('Unable to find ethernet device on a specified target!')
 
 
 BaseCommands.register('modify', ModifyCommands)
