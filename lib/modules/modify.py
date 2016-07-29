@@ -1,6 +1,7 @@
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
+from lib.tools import normalize_memory
 from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 
@@ -19,34 +20,35 @@ class ModifyCommands(BaseCommands):
             self.change_hw_resource(args.name, args.mem, args.cpu)
         elif args.net or args.dev:
             self.change_network(args.name, args.net, args.dev)
+        else:
+            raise VmCLIException('Too few arguments. Aborting...')
 
-    @args('--mem', help='memory to set for a vm in megabytes', type=int)
+    @args('--mem', help='memory to set for a vm in megabytes')
     @args('--cpu', help='cpu count to set for a vm', type=int)
     def change_hw_resource(self, name, mem=None, cpu=None):
         """Changes hardware resource of a specific VM."""
+        self.logger.info('Loading required VMware resources...')
         vm = self.get_obj('vm', name)
         if not mem and not cpu:
             raise VmCLIException('Neither memory or cpu specified! Cannot run hardware reconfiguration.')
 
         config_spec = vim.vm.ConfigSpec()
         if mem:
-            # TODO: allow to pass --mem 512M or --mem 1G
-            if mem < c.VM_MIN_MEM or mem > c.VM_MAX_MEM:
-                raise VmCLIException('Memory must be between {}-{}'.format(c.VM_MIN_MEM, c.VM_MAX_MEM))
-            else:
-                config_spec.memoryMB = mem
+            mem = normalize_memory(mem)
+            self.logger.info("Increasing memory to {} megabytes...".format(mem))
+            config_spec.memoryMB = mem
 
         if cpu:
             if cpu < c.VM_MIN_CPU or cpu > c.VM_MAX_CPU:
                 raise VmCLIException('CPU count must be between {}-{}'.format(c.VM_MIN_CPU, c.VM_MAX_CPU))
             else:
+                self.logger.info("Increasing cpu count to {} cores...".format(cpu))
                 config_spec.numCPUs = cpu
 
-        self.logger.info("Setting vm's resources according to specification...")
         task = vm.ReconfigVM_Task(config_spec)
         self.wait_for_tasks([task])
 
-    @args('--net', required=True, help='network to attach to a network device')
+    @args('--net', help='network to attach to a network device')
     @args('--dev', type=int, help='serial number of device to modify (e.g. 1 == eth0, 2 == eth1)')
     def change_network(self, name, net, dev=1):
         """Changes network associated with a specifc VM's network interface."""

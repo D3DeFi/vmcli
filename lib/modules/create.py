@@ -2,6 +2,7 @@ import netaddr
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
+from lib.tools import normalize_memory
 from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 from flavors import load_vm_flavor
@@ -52,8 +53,7 @@ class CreateEmptyVmCommands(BaseCommands):
         # Load cpu and memory configuration
         if not mem:
             mem = c.VM_MIN_MEM
-        elif mem < c.VM_MIN_MEM or mem > c.VM_MAX_MEM:
-            raise VmCLIException('Memory must be between {}-{}'.format(c.VM_MIN_MEM, c.VM_MAX_MEM))
+        mem = normalize_memory(mem)
 
         if not cpu:
             cpu = c.VM_MIN_CPU
@@ -90,7 +90,7 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--datastore', help='datastore where to store vm')
     @args('--cluster', help='cluster where to spawn mv')
     @args('--resource-pool', help='resource pool, which should be used for vm')
-    @args('--mem', help='memory to set for a vm in megabytes', type=int)
+    @args('--mem', help='memory to set for a vm in megabytes')
     @args('--cpu', help='cpu count to set for a vm', type=int)
     @args('--hdd', help='size of additional hdd to attach in gigabytes', type=int)
     @args('--net', help='network to attach to the vm')

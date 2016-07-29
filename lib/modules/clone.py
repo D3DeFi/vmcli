@@ -1,6 +1,7 @@
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
+from lib.tools import normalize_memory
 from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 from flavors import load_vm_flavor
@@ -29,7 +30,7 @@ class CloneCommands(BaseCommands):
     @args('--datastore', help='datastore where to store vm')
     @args('--cluster', help='cluster where to spawn mv')
     @args('--resource-pool', help='resource pool, which should be used for vm')
-    @args('--mem', help='memory to set for a vm in megabytes', type=int)
+    @args('--mem', help='memory to set for a vm in megabytes')
     @args('--cpu', help='cpu count to set for a vm', type=int)
     @args('--poweron', help='whether to power on vm after cloning', action='store_true')
     def clone_vm(self, name, template, datacenter=None, folder=None, datastore=None, cluster=None,
@@ -40,6 +41,8 @@ class CloneCommands(BaseCommands):
         # load needed variables
         self.logger.info('Loading required VMware resources...')
         mem = mem or flavor.get('mem', None) or conf.VM_MEM
+        if mem:
+            mem = normalize_memory(mem)
         cpu = cpu or flavor.get('cpu', None) or conf.VM_CPU
         template = self.get_obj('vm', template or flavor.get('template', None) or conf.VM_TEMPLATE)
         datacenter = self.get_obj('datacenter',
