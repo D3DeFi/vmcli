@@ -28,14 +28,14 @@ Help argument (--help) can be passed to any subcommand as well. Available subcom
 
 ### 2. Flavors (For clone and create operations only)
 
-Flavors are specific feature for virtual machine deploy operations such as create, create-empty or clone. They work similar to flavors used in any other tools or virtualization platforms (OpenStack's flavors, AWS's instance types, etc.) and can be defined by the user himself. 
+Flavors are specific feature for virtual machine deploy operations such as create, create-empty or clone. They work similar to flavors used in any other tools or virtualization platforms (OpenStack's flavors, AWS's instance types, etc.) and can be defined by the user himself.
 
 To define custom flavor, **start with copying file** examples/test_flavor.py.example into flavors/**some-name**.py. The name you choose will be later used when pointing vmcli program to flavor you wish to use. This file contains only Python dictionary representation of data.
 
 
 **Fill each row** as you desire respecting formatting and data types in examples (quoted strings, integers or booleans). If you want to omit some directives, simply delete entire row or type in None as a value: ```'folder': None,``` and that value will be fetched from other sources listed in this section.
 
-When flavor is finally defined, you can provide ```--flavor some-name``` option to one of the subcommands which support flavors. For example: ```./vmcli.py create --flavor m1_tiny``` 
+When flavor is finally defined, you can provide ```--flavor some-name``` option to one of the subcommands which support flavors. For example: ```./vmcli.py create --flavor m1_tiny```
 
 ### 3. Environment variables
 
@@ -43,7 +43,7 @@ When vmcli program does not find any cmd line argument or flavor directive for p
 <pre>grep -o "'VMCLI[_A-Z]*'" lib/config.py
 export VMCLI_LOG_PATH=/var/log/vmcli.log</pre>
 
-If you are unsure what data to fill to a specific ENV variable you can study simple lib/config.py file and its ```get_config(category, name, env_variable, data_type, default_value)``` function calls. 
+If you are unsure what data to fill to a specific ENV variable you can study simple lib/config.py file and its ```get_config(category, name, env_variable, data_type, default_value)``` function calls.
 
 There is one special environment variable ```VMCLI_CONFIG_FILE```, which points program to a specific vmcli.yml config file. This way, you can define multiple config files (e.g. ~/.dev.yaml, ~/.prod.yaml).
 
