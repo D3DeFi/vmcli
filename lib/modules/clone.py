@@ -83,7 +83,7 @@ class CloneCommands(BaseCommands):
             storagespec = vim.storageDrs.StoragePlacementSpec(
                     cloneName=name, vm=template, resourcePool=resource_pool, folder=folder, type='clone')
             storagespec.cloneSpec = vim.vm.CloneSpec(location=vim.vm.RelocateSpec(pool=resource_pool), powerOn=poweron)
-            storagespec.configSpec = vim.vm.ConfigSpec(name=name, memoryMB=mem, numCPUs=cpu)
+            storagespec.cloneSpec.config = vim.vm.ConfigSpec(name=name, memoryMB=mem, numCPUs=cpu, annotation=name)
             storagespec.podSelectionSpec = vim.storageDrs.PodSelectionSpec(storagePod=datastore)
             storagePlacementResult = self.content.storageResourceManager.RecommendDatastores(storageSpec=storagespec)
 
@@ -100,7 +100,7 @@ class CloneCommands(BaseCommands):
 
         elif ds_type == 'specific':
             relocspec = vim.vm.RelocateSpec(datastore=datastore, pool=resource_pool)
-            configspec = vim.vm.ConfigSpec(name=name, memoryMB=mem, numCPUs=cpu)
+            configspec = vim.vm.ConfigSpec(name=name, memoryMB=mem, numCPUs=cpu, annotation=name)
             clonespec = vim.vm.CloneSpec(config=configspec, location=relocspec, powerOn=poweron)
 
             task = template.Clone(folder=folder, name=name, spec=clonespec)

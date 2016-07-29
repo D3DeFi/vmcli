@@ -102,6 +102,7 @@ class CreateVmCommandBundle(BaseCommands):
 
         # load needed variables
         name = args.name
+        # TODO: Some of this is duplicitly checked in clone_vm too
         template = args.template or flavor.get('template', None) or conf.VM_TEMPLATE
         datacenter = args.datacenter or flavor.get('datacenter', None) or conf.VM_DATACENTER
         folder = args.folder or flavor.get('folder', None) or conf.VM_FOLDER
