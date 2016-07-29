@@ -38,6 +38,15 @@ To define custom flavor, **start with copying file** examples/test_flavor.py.exa
 When flavor is finally defined, you can provide ```--flavor some-name``` option to one of the subcommands which support flavors. For example: ```./vmcli.py create --flavor m1_tiny``` 
 
 ### 3. Environment variables
+
+When vmcli program does not find any cmd line argument or flavor directive for particular setting, it tries to load its value from environment variable, which name is hardcoded in the source code itself. For now, to get list of available environment variables and use some of them, simply run:
+<pre>grep -o "'VMCLI[_A-Z]*'" lib/config.py
+export VMCLI_LOG_PATH=/var/log/vmcli.log</pre>
+
+If you are unsure what data to fill to a specific ENV variable you can study simple lib/config.py file and its ```get_config(category, name, env_variable, data_type, default_value)``` function calls. 
+
+There is one special environment variable ```VMCLI_CONFIG_FILE```, which points program to a specific vmcli.yml config file. This way, you can define multiple config files (e.g. ~/.dev.yaml, ~/.prod.yaml).
+
 ### 4. Config file (yaml)
 ### 5. Default values
 
