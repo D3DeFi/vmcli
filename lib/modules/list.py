@@ -29,12 +29,7 @@ class ListCommands(BaseCommands):
         # TODO: format output
         obj = self.get_obj(vimtype, name, default=False)
         if obj:
-            print obj.name, obj.configStatus, obj.overallStatus
-            # print obj.runtime.powerState
-            if obj.parent:
-                print obj.parent.name
-            if obj.guest:
-                print obj.guest.guestId
+            print obj.summary
 
 
 BaseCommands.register('list', ListCommands)
