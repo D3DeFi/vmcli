@@ -84,7 +84,7 @@ class ModifyCommands(BaseCommands):
                 nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
 
                 config_spec = vim.vm.ConfigSpec(deviceChange=[nicspec])
-                self.logger.info("Attaching network {} to VM's device {}...".format(net, dev))
+                self.logger.info("Attaching network {} to {}. network device on VM...".format(net, dev))
                 task = vm.ReconfigVM_Task(config_spec)
                 self.wait_for_tasks([task])
                 return

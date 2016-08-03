@@ -100,17 +100,9 @@ class CreateVmCommandBundle(BaseCommands):
     def execute(self, args):
         flavor = load_vm_flavor(args.flavor)
 
-        # load needed variables
         name = args.name
-        # TODO: Some of this is duplicitly checked in clone_vm too
+        # load variables, which are not loaded automatically by subcommands or which needs to be loaded before then
         template = args.template or flavor.get('template', None) or conf.VM_TEMPLATE
-        datacenter = args.datacenter or flavor.get('datacenter', None) or conf.VM_DATACENTER
-        folder = args.folder or flavor.get('folder', None) or conf.VM_FOLDER
-        datastore = args.datastore or flavor.get('datastore', None) or conf.VM_DATASTORE
-        cluster = args.cluster or flavor.get('cluster', None) or conf.VM_CLUSTER
-        resource_pool = args.resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL
-        mem = args.mem or flavor.get('mem', None) or conf.VM_MEM
-        cpu = args.cpu or flavor.get('cpu', None) or conf.VM_CPU
         hdd = args.hdd or flavor.get('hdd', None) or conf.VM_HDD
         net = args.net or flavor.get('net', None) or conf.VM_NETWORK
         net_cfg = args.net_cfg or flavor.get('net_cfg', None) or conf.VM_NETWORK_CFG
@@ -120,24 +112,24 @@ class CreateVmCommandBundle(BaseCommands):
         if not name or not template:
             raise VmCLIException('Arguments name or template are missing, cannot continue!')
 
-        # Initialize used commands
         clone = CloneCommands(self.connection)
-        modify = ModifyCommands(self.connection)
-        power = PowerCommands(self.connection)
-        attach = AttachCommands(self.connection)
-        execute = ExecCommands(self.connection)
-
-        clone.clone_vm(name, template, datacenter, folder, datastore, cluster, resource_pool, False, mem, cpu)
+        clone.clone_vm(name, args.template, args.datacenter, args.folder, args.datastore,
+                        args.cluster, args.resource_pool, False, args.mem, args.cpu)
 
         if net:
             # Change network assigned to the first interface on the VM
+            modify = ModifyCommands(self.connection)
             modify.change_network(name, net, dev=1)
         if hdd:
+            # Attach additional hard drive
+            attach = AttachCommands(self.connection)
             attach.attach_hdd(name, hdd)
 
+        power = PowerCommands(self.connection)
         power.poweron_vm(name)
         self.wait_for_guest_os(self.get_obj('vm', name))
 
+        execute = ExecCommands(self.connection)
         # Configure first ethernet device on the host, assumes traditional naming scheme
         if net_cfg:
             # assume prefix 24 if user forgots
