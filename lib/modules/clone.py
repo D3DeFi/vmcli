@@ -53,7 +53,7 @@ class CloneCommands(BaseCommands):
             resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL) or cluster.resourcePool
 
         # Search first for datastore cluster, then for specific datastore
-        datastore = datastore or flavor.get('datastore', None) or conf.VM_DATASTORE
+        datastore = datastore or flavor.get('datastore', None) or conf.VM_DATASTORE or template.datastore[0].info.name
         ds = self.get_obj('datastore_cluster', datastore)
         ds_type = 'cluster'
         if not ds:
