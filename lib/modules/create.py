@@ -29,7 +29,7 @@ class CreateEmptyVmCommands(BaseCommands):
     @args('--folder', help='folder where to place vm')
     @args('--resource-pool', help='resource pool, which should be used for vm')
     @args('--datastore', help='datastore where to store vm')
-    @args('--mem', help='memory to set for a vm in megabytes', type=int)
+    @args('--mem', help='memory to set for a vm in megabytes')
     @args('--cpu', help='cpu count to set for a vm', type=int)
     def execute(self, args):
         flavor = load_vm_flavor(args.flavor)
