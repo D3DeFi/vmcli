@@ -21,7 +21,7 @@ class ListCommands(BaseCommands):
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
         self.logger.info('Searching for requested category...')
         for item in container.view:
-            print(item.name)
+            print(item.name.encode('utf-8'))
 
     @args('--name', help='search for a specific object instead')
     def show_item(self, vimtype, name):
@@ -29,7 +29,7 @@ class ListCommands(BaseCommands):
         # TODO: format output
         obj = self.get_obj(vimtype, name, default=False)
         if obj:
-            print obj.summary
+            print(obj.summary)
 
 
 BaseCommands.register('list', ListCommands)
