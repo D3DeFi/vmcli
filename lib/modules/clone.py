@@ -38,6 +38,8 @@ class CloneCommands(BaseCommands):
         """Clones new virtual machine from a template or any other existing machine."""
         flavor = load_vm_flavor(flavor)
 
+        # TODO: let script fail when user specifies something wrong instead of using vcenter defaults
+        # E.g.: ./vmcli.py create --folder non-existing will now pick Root folder of vcenter
         # load needed variables
         self.logger.info('Loading required VMware resources...')
         mem = mem or flavor.get('mem', None) or conf.VM_MEM

@@ -114,7 +114,7 @@ class CreateVmCommandBundle(BaseCommands):
 
         clone = CloneCommands(self.connection)
         clone.clone_vm(name, args.template, args.datacenter, args.folder, args.datastore,
-                        args.cluster, args.resource_pool, False, args.mem, args.cpu)
+                        args.cluster, args.resource_pool, False, args.mem, args.cpu, flavor=args.flavor)
 
         if net:
             # Change network assigned to the first interface on the VM
