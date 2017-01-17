@@ -72,7 +72,7 @@ class CloneCommands(BaseCommands):
             self.exit('VM with name {} already exists. Exiting...'.format(name))
 
         if not template:
-            self.exit('Template {} does not exists. Exiting...'.format(template.name))
+            self.exit('Specified template does not exists. Exiting...')
 
         self.logger.info('  * Using datacenter..........{}'.format(datacenter.name))
         self.logger.info('  * Using cluster.............{}'.format(cluster.name))
