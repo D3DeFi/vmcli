@@ -15,6 +15,8 @@ To begin using vmcli you need to have python2.7, python-virtualenv and python-pi
   vmcli.py --help
 ```
 
+If you plan to use --net-cfg option during clone/create subcommands, ensure appropriate script is present in your template (/usr/share/vmcli/provision-interfaces.sh). Example of this script can be found in this repository in examples/provision-interfaces.sh
+
 Configuration directives
 ------------------------
 
