@@ -106,8 +106,8 @@ class CreateVmCommandBundle(BaseCommands):
         hdd = args.hdd or flavor.get('hdd', None) or conf.VM_HDD
         net = args.net or flavor.get('net', None) or conf.VM_NETWORK
         net_cfg = args.net_cfg or flavor.get('net_cfg', None) or conf.VM_NETWORK_CFG
-        guest_user = args.guest_user or conf.VM_GUEST_USER
-        guest_pass = args.guest_pass or conf.VM_GUEST_PASS
+        guest_user = args.guest_user or flavor.get('guest_user', None) or conf.VM_GUEST_USER
+        guest_pass = args.guest_pass or flavor.get('guest_pass', None) or conf.VM_GUEST_PASS
 
         if not name or not template:
             raise VmCLIException('Arguments name or template are missing, cannot continue!')

@@ -19,5 +19,7 @@ flavor = {
     'template': 'template-name',
     'net': 'dvPortGroup10-example',
     'net_cfg': '10.1.10.2/24',
-    'poweron': True
+    'poweron': True,
+    'guest_user': 'root',
+    'guest_pass': 'r00tme'
 }
