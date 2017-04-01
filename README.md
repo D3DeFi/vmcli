@@ -62,5 +62,3 @@ TODO
 ----
 
  - implement cache to speed up get_obj calls
- - fix: list vm | grep <str> throws:
-    UnicodeEncodeError: 'ascii' codec can't encode character u'\u0160' in position 0: ordinal not in range(128)
