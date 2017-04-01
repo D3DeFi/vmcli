@@ -32,10 +32,10 @@ Help argument (--help) can be passed to any subcommand as well. Available subcom
 
 Flavors are specific feature for virtual machine deploy operations such as create, create-empty or clone. They work similar to flavors used in any other tools or virtualization platforms (OpenStack's flavors, AWS's instance types, etc.) and can be defined by the user himself.
 
-To define custom flavor, **start with copying file** examples/test_flavor.py.example into flavors/**some-name**.py. The name you choose will be later used when pointing vmcli program to flavor you wish to use. This file contains only Python dictionary representation of data.
+To define custom flavor, **start with copying file** examples/flavor.yml.example into flavors/**some-name**.yml. The name you choose will be later used when pointing vmcli program to flavor you wish to use. This file contains only Python dictionary representation of data.
 
 
-**Fill each row** as you desire respecting formatting and data types in examples (quoted strings, integers or booleans). If you want to omit some directives, simply delete entire row or type in None as a value: ```'folder': None,``` and that value will be fetched from other sources listed in this section.
+**Fill each row** as you desire respecting formatting in example. If you want to omit some directives, simply delete entire row or type in None as a value: ```folder: None``` and that value will be fetched from other sources listed in this section.
 
 When flavor is finally defined, you can provide ```--flavor some-name``` option to one of the subcommands which support flavors. For example: ```./vmcli.py create --flavor m1_tiny```
 
