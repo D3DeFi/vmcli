@@ -4,7 +4,7 @@ import sys
 import argparse
 
 from lib.tools.logger import logger
-from lib.tools.argparser import get_arg_subparsers
+from lib.tools.argparser import get_arg_subparsers, argument_loader
 from lib.connector import connect
 from lib.modules import module_loader
 from lib.exceptions import VmCLIException
@@ -33,6 +33,8 @@ if __name__ == '__main__':
     # Load in options from Command classes
     parser = get_arg_subparsers(parser)
     args = parser.parse_args()
+    # Load in unprovided arguments by priority - arg, flavor, ENV, config, default
+    args = argument_loader(args)
 
     if args.log_level:
         logger.setLevel(args.log_level)
