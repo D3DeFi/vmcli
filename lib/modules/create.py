@@ -85,6 +85,7 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--net-cfg', help="network configuration. E.g --net-cfg '10.1.10.2/24'", map='VM_NETWORK_CFG')
     @args('--guest-user', '--gu', help="guest's user under which to run command through vmtools", map='VM_GUEST_USER')
     @args('--guest-pass', '--gp', help="guest user's password", map='VM_GUEST_PASS')
+    @args('--callback', help='arguments to pass to callback functions. E.g. --callback "var1; var 2"')
     def execute(self, args):
         """Clones VM, assigns it proper hardware devices, powers it on ad prepares it for further configuration."""
         if not args.name or not args.template:
@@ -134,6 +135,9 @@ class CreateVmCommandBundle(BaseCommands):
                                    args.guest_pass, wait_for_tools=True)
 
         self.logger.info('Deployed vm {}'.format(args.name))
+
+        # Execute callbacks from callbacks/ directory
+        execute.exec_callbacks(args, args.callback)
 
 
 BaseCommands.register('create', CreateVmCommandBundle)

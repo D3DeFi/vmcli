@@ -52,6 +52,13 @@ There is one special environment variable ```VMCLI_CONFIG_FILE```, which points 
 ### 4. Config file (yaml)
 ### 5. Default values
 
+Callbacks
+---------
+
+You can place any executable file into callbacks directory and it gets executed right after running 'create' sub-command. This is a great way to hook up your configuration management or any other provisioning scripts you may have. 
+
+First argument to each callback will always be JSON dictionary containing all valid arguments passed to vmcli. Should you require additional arguments to be passed to your callbacks, use --callback option.
+
 Examples
 --------
 

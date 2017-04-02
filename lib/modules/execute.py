@@ -1,3 +1,7 @@
+import os
+import json
+import subprocess
+
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -51,6 +55,32 @@ class ExecCommands(BaseCommands):
                     raise VmCLIException(e.msg + '. Try providing absolute path to the binary.')
         except vim.fault.InvalidGuestLogin as e:
             raise VmCLIException(e.msg)
+
+    def exec_callbacks(self, args, callback_args):
+        """Runs any executable present inside project/callbacks/ directory on host with provided arguments.
+        First argument to executable is always JSON object containing all arguments passed to vmcli and its
+        subcommands via cli. Following are arguments passed as a value via command line argument callback.
+        For example, this --callback 'var1; var2; multi word var' will be passed as:
+        ./callbacks/script.sh '{"name": "..", "template": ...}' 'var1' 'var2' 'multi word var'
+        """
+        # Parse additional callback arguments passed from command line
+        callback_args = [x.lstrip() for x in callback_args.rstrip(';').split(';')]
+        # Get all callback scripts
+        callbacks = [os.path.realpath('callbacks/' + x) for x in os.listdir('callbacks/') if not x.startswith('.')]
+        # Prepare JSON serializable object from args namespace
+        arguments = {}
+        for argument in [x for x in dir(args) if not x.startswith('_')]:
+            arguments[argument] = getattr(args, argument, None)
+        arguments = json.dumps(arguments)
+
+        for executable in callbacks:
+            self.logger.info('Running callback "{}" ...'.format(executable))
+            command = [executable, arguments]
+            command.extend(callback_args)
+            try:
+                subprocess.Popen(command).communicate()
+            except OSError:
+                raise VmCLIException('Unable to execute callback {}! Check it for errors'.format(executable))
 
 
 BaseCommands.register('exec', ExecCommands)
