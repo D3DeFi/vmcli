@@ -5,15 +5,15 @@ import yaml
 def get_config(section, key, env_var, var_type, default=None):
     """Tries to load configuration directive from environment variable or configuration file in
     the exact order. This directives could be overriden via command line arguments."""
-    value = os.getenv(env_var, None)
-    if not value:
-        try:
-            section = CONFIG_FILE.get(section, None)
-            return var_type(section[key])
-        except (AttributeError, KeyError, TypeError):
-            return default
-    else:
-        return value
+    try:
+        value = os.getenv(env_var, None)
+        if not value:
+                section = CONFIG_FILE.get(section, None)
+                return var_type(section[key])
+        else:
+            return var_type(value)
+    except (AttributeError, KeyError, TypeError):
+        return default
     return default
 
 
