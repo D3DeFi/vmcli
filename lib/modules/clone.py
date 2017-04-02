@@ -16,7 +16,7 @@ class CloneCommands(BaseCommands):
         super(CloneCommands, self).__init__(*args, **kwargs)
 
     @args('--name', required=True, help='name for a cloned object')
-    @args('--template', help='template object to use as a source of cloning')
+    @args('--template', help='template object to use as a source of cloning', map='VM_TEMPLATE')
     def execute(self, args):
         try:
             self.clone_vm(args.name, args.template, args.datacenter, args.folder, args.datastore,
@@ -25,14 +25,14 @@ class CloneCommands(BaseCommands):
             self.exit(e.message, errno=2)
 
     @args('--flavor', help='flavor to use for a vm cloning')
-    @args('--datacenter', help='datacenter where to create vm')
-    @args('--folder', help='folder where to place vm')
-    @args('--datastore', help='datastore where to store vm')
-    @args('--cluster', help='cluster where to spawn mv')
-    @args('--resource-pool', help='resource pool, which should be used for vm')
-    @args('--mem', help='memory to set for a vm in megabytes')
-    @args('--cpu', help='cpu count to set for a vm', type=int)
-    @args('--poweron', help='whether to power on vm after cloning', action='store_true')
+    @args('--datacenter', help='datacenter where to create vm', map='VM_DATACENTER')
+    @args('--folder', help='folder where to place vm', map='VM_FOLDER')
+    @args('--datastore', help='datastore where to store vm', map='VM_DATASTORE')
+    @args('--cluster', help='cluster where to spawn mv', map='VM_CLUSTER')
+    @args('--resource-pool', help='resource pool, which should be used for vm', map='VM_RESOURCE_POOL')
+    @args('--mem', help='memory to set for a vm in megabytes', map='VM_MEM')
+    @args('--cpu', help='cpu count to set for a vm', type=int, map='VM_CPU')
+    @args('--poweron', help='whether to power on vm after cloning', action='store_true', map='VM_POWERON')
     def clone_vm(self, name, template, datacenter=None, folder=None, datastore=None, cluster=None,
                 resource_pool=None, poweron=None, mem=None, cpu=None, flavor=None):
         """Clones new virtual machine from a template or any other existing machine."""
@@ -42,31 +42,25 @@ class CloneCommands(BaseCommands):
         # E.g.: ./vmcli.py create --folder non-existing will now pick Root folder of vcenter
         # load needed variables
         self.logger.info('Loading required VMware resources...')
-        mem = mem or flavor.get('mem', None) or conf.VM_MEM
         if mem:
             mem = normalize_memory(mem)
-        cpu = cpu or flavor.get('cpu', None) or conf.VM_CPU
-        template = self.get_obj('vm', template or flavor.get('template', None) or conf.VM_TEMPLATE)
-        datacenter = self.get_obj('datacenter',
-            datacenter or flavor.get('datacenter', None) or conf.VM_DATACENTER, default=True)
-        cluster = self.get_obj('cluster', cluster or flavor.get('cluster', None) or conf.VM_CLUSTER, default=True)
-        folder = self.get_obj('folder', folder or flavor.get('folder', None) or conf.VM_FOLDER) or datacenter.vmFolder
-        resource_pool = self.get_obj('resource_pool',
-            resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL) or cluster.resourcePool
+        template = self.get_obj('vm', template)
+        datacenter = self.get_obj('datacenter', datacenter, default=True)
+        cluster = self.get_obj('cluster', cluster, default=True)
+        folder = self.get_obj('folder', folder) or datacenter.vmFolder
+        resource_pool = self.get_obj('resource_pool', resource_pool) or cluster.resourcePool
 
         # Search first for datastore cluster, then for specific datastore
-        datastore = datastore or flavor.get('datastore', None) or conf.VM_DATASTORE or template.datastore[0].info.name
+        datastore = datastore or template.datastore[0].info.name
         ds = self.get_obj('datastore_cluster', datastore)
         ds_type = 'cluster'
         if not ds:
             ds = self.get_obj('datastore', datastore)
             ds_type = 'specific'
             if not ds:
-                self.exit('Neither datastore cluster or specific datastore is matching {}. Exiting...'.format(datastore))
+                self.exit('Neither datastore cluster or specific datastore is matching {}. Exiting...'.format(
+                        datastore))
         datastore = ds
-
-        if poweron is not False:
-            poweron = poweron or conf.VM_POWERON
 
         if self.get_obj('vm', name):
             self.exit('VM with name {} already exists. Exiting...'.format(name))

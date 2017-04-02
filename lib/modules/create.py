@@ -5,7 +5,6 @@ from lib.modules import BaseCommands
 from lib.tools import normalize_memory
 from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
-from flavors import load_vm_flavor
 
 import lib.config as conf
 import lib.constants as c
@@ -26,51 +25,40 @@ class CreateEmptyVmCommands(BaseCommands):
 
     @args('--name', help='name for a cloned object')
     @args('--flavor', help='flavor to use for a new vm')
-    @args('--folder', help='folder where to place vm')
-    @args('--resource-pool', help='resource pool, which should be used for vm')
-    @args('--datastore', help='datastore where to store vm')
-    @args('--mem', help='memory to set for a vm in megabytes')
-    @args('--cpu', help='cpu count to set for a vm', type=int)
+    @args('--folder', help='folder where to place vm', map='VM_FOLDER')
+    @args('--resource-pool', help='resource pool, which should be used for vm', map='VM_RESOURCE_POOL')
+    @args('--datastore', help='datastore where to store vm', map='VM_DATASTORE')
+    @args('--mem', help='memory to set for a vm in megabytes', map='VM_MEM')
+    @args('--cpu', help='cpu count to set for a vm', type=int, map='VM_CPU')
     def execute(self, args):
-        flavor = load_vm_flavor(args.flavor)
-        folder = args.folder or flavor.get('folder', None) or conf.VM_FOLDER
-        resource_pool = args.resource_pool or flavor.get('resource_pool', None) or conf.VM_RESOURCE_POOL
-        # Add datastore-cluster support to create-empty operation
-        datastore = args.datastore or flavor.get('datastore', None) or conf.VM_DATASTORE
-        mem = args.mem or flavor.get('mem', None) or conf.VM_MEM
-        cpu = args.cpu or flavor.get('cpu', None) or conf.VM_CPU
-
-        self.create_empty_vm(args.name, folder, resource_pool, datastore, mem, cpu)
-
-    def create_empty_vm(self, name, folder, resource_pool, datastore, mem, cpu):
-        """Creates empty vm without disk"""
-        if not (name or folder or resource_pool or datastore):
+        """Creates empty vm without disk."""
+        if not (args.name or args.folder or args.resource_pool or args.datastore):
             raise VmCLIException('Missing arguments! Make sure name, folder, resource_pool and datastore are present.')
 
         # Store logs and snapshots withing same directory as ds_path, which is [datastore]vm_name
-        ds_path = '[{}]{}'.format(datastore, name)
+        ds_path = '[{}]{}'.format(args.datastore, args.name)
         vm_files = vim.vm.FileInfo(logDirectory=None, snapshotDirectory=None, suspendDirectory=None, vmPathName=ds_path)
         # Load cpu and memory configuration
-        if not mem:
-            mem = c.VM_MIN_MEM
-        mem = normalize_memory(mem)
+        if not args.mem:
+            args.mem = c.VM_MIN_MEM
+        args.mem = normalize_memory(args.mem)
 
-        if not cpu:
-            cpu = c.VM_MIN_CPU
-        elif cpu < c.VM_MIN_CPU or cpu > c.VM_MAX_CPU:
+        if not args.cpu:
+            args.cpu = c.VM_MIN_CPU
+        elif args.cpu < c.VM_MIN_CPU or args.cpu > c.VM_MAX_CPU:
             raise VmCLIException('CPU count must be between {}-{}'.format(c.VM_MIN_CPU, c.VM_MAX_CPU))
 
         # configuration specification for the new vm, if no mem and cpu is provided, minimal values will be used
         config_spec = vim.vm.ConfigSpec()
-        config_spec.name = name
-        config_spec.memoryMB = mem
-        config_spec.numCPUs = cpu
+        config_spec.name = args.name
+        config_spec.memoryMB = args.mem
+        config_spec.numCPUs = args.cpu
         config_spec.files = vm_files
         config_spec.guestId = 'otherLinux64Guest'
         config_spec.version = 'vmx-08'
 
-        folder = self.get_obj('folder', folder)
-        resource_pool = self.get_obj('resource_pool', resource_pool)
+        folder = self.get_obj('folder', args.folder)
+        resource_pool = self.get_obj('resource_pool', args.resource_pool)
         task = folder.CreateVM_Task(config=config_spec, pool=resource_pool)
         self.wait_for_tasks([task])
 
@@ -83,63 +71,52 @@ class CreateVmCommandBundle(BaseCommands):
         super(CreateVmCommandBundle, self).__init__(*args, **kwargs)
 
     @args('--name', required=True, help='name for a new vm')
-    @args('--template', '--tem', help='template object to use as a source of cloning')
+    @args('--template', '--tem', help='template object to use as a source of cloning', map='VM_TEMPLATE')
     @args('--flavor', help='flavor to use for a vm cloning')
-    @args('--datacenter', '--dc', help='datacenter where to create vm')
-    @args('--folder', help='folder where to place vm')
-    @args('--datastore', '--ds', help='datastore where to store vm')
-    @args('--cluster', '--cl', help='cluster where to spawn mv')
-    @args('--resource-pool', '--rpool', help='resource pool, which should be used for vm')
-    @args('--mem', help='memory to set for a vm in megabytes')
-    @args('--cpu', help='cpu count to set for a vm', type=int)
-    @args('--hdd', help='size of additional hdd to attach in gigabytes', type=int)
-    @args('--net', help='network to attach to the vm')
-    @args('--net-cfg', help="network configuration. E.g --net-cfg '10.1.10.2/24'")
-    @args('--guest-user', '--gu', help="guest's user under which to run command through vmtools")
-    @args('--guest-pass', '--gp', help="guest user's password")
+    @args('--datacenter', '--dc', help='datacenter where to create vm', map='VM_DATACENTER')
+    @args('--folder', help='folder where to place vm', map='VM_FOLDER')
+    @args('--datastore', '--ds', help='datastore where to store vm', map='VM_DATASTORE')
+    @args('--cluster', '--cl', help='cluster where to spawn mv', map='VM_CLUSTER')
+    @args('--resource-pool', '--rpool', help='resource pool, which should be used for vm', map='VM_RESOURCE_POOL')
+    @args('--mem', help='memory to set for a vm in megabytes', map='VM_MEM')
+    @args('--cpu', help='cpu count to set for a vm', type=int, map='VM_CPU')
+    @args('--hdd', help='size of additional hdd to attach in gigabytes', type=int, map='VM_HDD')
+    @args('--net', help='network to attach to the vm', map='VM_NETWORK')
+    @args('--net-cfg', help="network configuration. E.g --net-cfg '10.1.10.2/24'", map='VM_NETWORK_CFG')
+    @args('--guest-user', '--gu', help="guest's user under which to run command through vmtools", map='VM_GUEST_USER')
+    @args('--guest-pass', '--gp', help="guest user's password", map='VM_GUEST_PASS')
     def execute(self, args):
-        flavor = load_vm_flavor(args.flavor)
-
-        name = args.name
-        # load variables, which are not loaded automatically by subcommands or which needs to be loaded before then
-        template = args.template or flavor.get('template', None) or conf.VM_TEMPLATE
-        hdd = args.hdd or flavor.get('hdd', None) or conf.VM_HDD
-        net = args.net or flavor.get('net', None) or conf.VM_NETWORK
-        net_cfg = args.net_cfg or flavor.get('net_cfg', None) or conf.VM_NETWORK_CFG
-        guest_user = args.guest_user or flavor.get('guest_user', None) or conf.VM_GUEST_USER
-        guest_pass = args.guest_pass or flavor.get('guest_pass', None) or conf.VM_GUEST_PASS
-
-        if not name or not template:
+        """Clones VM, assigns it proper hardware devices, powers it on ad prepares it for further configuration."""
+        if not args.name or not args.template:
             raise VmCLIException('Arguments name or template are missing, cannot continue!')
 
         clone = CloneCommands(self.connection)
-        clone.clone_vm(name, args.template, args.datacenter, args.folder, args.datastore,
-                        args.cluster, args.resource_pool, False, args.mem, args.cpu, flavor=args.flavor)
+        clone.clone_vm(args.name, args.template, args.datacenter, args.folder, args.datastore,
+                       args.cluster, args.resource_pool, False, args.mem, args.cpu, flavor=args.flavor)
 
-        if net:
+        if args.net:
             # Change network assigned to the first interface on the VM
             modify = ModifyCommands(self.connection)
-            modify.change_network(name, net, dev=1)
-        if hdd:
+            modify.change_network(args.name, args.net, dev=1)
+        if args.hdd:
             # Attach additional hard drive
             attach = AttachCommands(self.connection)
-            attach.attach_hdd(name, hdd)
+            attach.attach_hdd(args.name, args.hdd)
 
         power = PowerCommands(self.connection)
-        power.poweron_vm(name)
-        self.wait_for_guest_os(self.get_obj('vm', name))
+        power.poweron_vm(args.name)
+        self.wait_for_guest_os(self.get_obj('vm', args.name))
 
         execute = ExecCommands(self.connection)
         # Configure first ethernet device on the host, assumes traditional naming scheme
-        if net_cfg:
+        if args.net_cfg:
             # assume prefix 24 if user forgots
-            if len(net_cfg.split('/')) == 1:
-                net_cfg += '/24'
+            if len(args.net_cfg.split('/')) == 1:
+                args.net_cfg += '/24'
 
             try:
-                ip = netaddr.IPNetwork(net_cfg)
+                ip = netaddr.IPNetwork(args.net_cfg)
                 gateway = list(ip)[1]
-                ip_addr = str(ip)
             except netaddr.core.AddrFormatError as e:
                 ip, gateway = None, None
                 self.logger.warning(str(e.message) + '. Skipping network configuration')
@@ -147,14 +124,16 @@ class CreateVmCommandBundle(BaseCommands):
             if ip and gateway:
                 # expects script inside template
                 commands = [
-                    '/bin/bash /usr/share/vmcli/provision-interfaces.sh {} {} {} {} {}'.format(ip.ip, ip.netmask, gateway, ip.network, ip.broadcast)
+                    '/bin/bash /usr/share/vmcli/provision-interfaces.sh {} {} {} {} {}'.format(
+                            ip.ip, ip.netmask, gateway, ip.network, ip.broadcast)
                 ]
-                execute.exec_inside_vm(name, commands, guest_user, guest_pass, wait_for_tools=True)
+                execute.exec_inside_vm(args.name, commands, args.guest_user, args.guest_pass, wait_for_tools=True)
 
         if conf.VM_ADDITIONAL_CMDS:
-            execute.exec_inside_vm(name, conf.VM_ADDITIONAL_CMDS, guest_user, guest_pass, wait_for_tools=True)
+            execute.exec_inside_vm(args.name, conf.VM_ADDITIONAL_CMDS, args.guest_user,
+                                   args.guest_pass, wait_for_tools=True)
 
-        self.logger.info('Deployed vm {}'.format(name))
+        self.logger.info('Deployed vm {}'.format(args.name))
 
 
 BaseCommands.register('create', CreateVmCommandBundle)

@@ -1,4 +1,11 @@
+import lib.config as conf
+
 from lib.modules import COMMANDS
+from flavors import load_vm_flavor
+
+
+# mappings between command-line arguments and lib.config.VALUES are stored here
+__args_mappings = {}
 
 
 def args(*args, **kwargs):
@@ -6,6 +13,12 @@ def args(*args, **kwargs):
     attribute is later used in command line argument parsing from every submodule's methods."""
     # decorator for argument definitions
     def _decorator(func):
+        # If map arguments is present in @args decorator, pop it and create mapping between lib.config.VALUE and arg
+        if 'map' in kwargs:
+            # if argument does not have 'dest' parameter, it's name will be used instead
+            dest = kwargs.get('dest', None) or args[0].lstrip('-')
+            __args_mappings[dest.replace('-', '_')] = kwargs.pop('map')
+
         func.__dict__.setdefault('args', []).insert(0, (args, kwargs))
         return func
     return _decorator
@@ -35,3 +48,27 @@ def get_arg_subparsers(parser):
                 arguments.setdefault(dest, [args, kwargs])
 
     return parser
+
+
+def argument_loader(args):
+    """Iterates over loaded command line arguments and fills any unprovided arguments from other sources.
+    Arguments are filled in this order: command-line arguments, flavors, env variables, config file, defaults."""
+    flavor = {}
+    # First check if we can lookup values in flavor
+    if hasattr(args, 'flavor') and args.flavor:
+        flavor = load_vm_flavor(args.flavor)
+
+    # Iterate over command line arguments
+    for argument in [x for x in dir(args) if not x.startswith('_')]:
+        value = getattr(args, argument, None)
+        if not value:
+            # If value for argument was not provided from cmd line, try flavor
+            if flavor and flavor.get(argument, None):
+                val = flavor.get(argument)
+                setattr(args, argument, val)
+            # if both cmd line and flavor haven't provided value, try defaults in lib.config
+            elif argument in __args_mappings:
+                val = getattr(conf, __args_mappings[argument])
+                setattr(args, argument, val)
+
+    return args
