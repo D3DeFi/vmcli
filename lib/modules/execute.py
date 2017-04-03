@@ -56,7 +56,7 @@ class ExecCommands(BaseCommands):
         except vim.fault.InvalidGuestLogin as e:
             raise VmCLIException(e.msg)
 
-    def exec_callbacks(self, args, callback_args=[]):
+    def exec_callbacks(self, args, callback_args):
         """Runs any executable present inside project/callbacks/ directory on host with provided arguments.
         First argument to executable is always JSON object containing all arguments passed to vmcli and its
         subcommands via cli. Following are arguments passed as a value via command line argument callback.
@@ -66,6 +66,8 @@ class ExecCommands(BaseCommands):
         # Parse additional callback arguments passed from command line
         if callback_args:
             callback_args = [x.lstrip() for x in callback_args.rstrip(';').split(';')]
+        else:
+            callback_args = []
         # Get all callback scripts
         callbacks_dir = sorted(os.listdir('callbacks/'))
         callbacks = [os.path.realpath('callbacks/' + x) for x in callbacks_dir if not x.startswith('.')]
