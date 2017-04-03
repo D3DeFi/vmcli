@@ -3,3 +3,12 @@ env/
 *.swp
 vmcli.yml
 *.log
+
+# Ignore everything except empty callbacks directory and .placeholder
+callbacks/
+!callbacks/.placeholder
+
+# Ignore everything except flavors directory and example flavors
+flavors/
+!flavors/__init__.py
+!flavors/m1_tiny.yml
