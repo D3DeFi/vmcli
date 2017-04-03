@@ -57,7 +57,7 @@ Callbacks
 
 You can place any executable file into callbacks directory and it gets executed right after running 'create' sub-command. This is a great way to hook up your configuration management or any other provisioning scripts you may have. 
 
-First argument to each callback will always be JSON dictionary containing all valid arguments passed to vmcli. Should you require additional arguments to be passed to your callbacks, use --callback option.
+First argument to each callback will always be JSON dictionary containing all valid arguments passed to vmcli. Should you require additional arguments to be passed to your callbacks, use --callback option. Ordering of executables may be achieved by naming them 01script.sh, 02script.py and so on.
 
 Examples
 --------

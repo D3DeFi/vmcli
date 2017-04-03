@@ -66,7 +66,8 @@ class ExecCommands(BaseCommands):
         # Parse additional callback arguments passed from command line
         callback_args = [x.lstrip() for x in callback_args.rstrip(';').split(';')]
         # Get all callback scripts
-        callbacks = [os.path.realpath('callbacks/' + x) for x in os.listdir('callbacks/') if not x.startswith('.')]
+        callbacks_dir = sorted(os.listdir('callbacks/'))
+        callbacks = [os.path.realpath('callbacks/' + x) for x in callbacks_dir if not x.startswith('.')]
         # Prepare JSON serializable object from args namespace
         arguments = {}
         for argument in [x for x in dir(args) if not x.startswith('_')]:
