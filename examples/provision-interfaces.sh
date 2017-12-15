@@ -104,4 +104,6 @@ else
 	then
 		configure_rhel_interfaces
 	fi
+    # Refresh gateway's ARP table
+    ping -c 1 $GATEWAY >/dev/null 2>&1
 fi

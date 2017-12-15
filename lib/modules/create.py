@@ -137,7 +137,8 @@ class CreateVmCommandBundle(BaseCommands):
         self.logger.info('Deployed vm {}'.format(args.name))
 
         # Execute callbacks from callbacks/ directory
-        execute.exec_callbacks(args, args.callback)
+        if args.callback:
+            execute.exec_callbacks(args, args.callback)
 
 
 BaseCommands.register('create', CreateVmCommandBundle)
