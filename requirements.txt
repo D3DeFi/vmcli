@@ -1,5 +1,5 @@
-netaddr==0.7.18
-pyvmomi==6.0.0
-PyYAML==3.11
-requests==2.4.3
-six==1.10.0
+netaddr==0.7.19
+pyvmomi==6.5.0.2017.5.post1
+PyYAML==3.12
+requests==2.18.4
+six==1.11.0
