@@ -55,7 +55,7 @@ VM_HDD              = get_config('deploy', 'hdd', 'VMCLI_VM_HDD', int, None)
 VM_NETWORK          = get_config('deploy', 'network', 'VMCLI_VM_NETWORK', str, None)
 VM_NETWORK_CFG      = get_config('deploy', 'network_cfg', 'VMCLI_VM_NETWORK_CFG', str, None)
 VM_TEMPLATE         = get_config('deploy', 'template', 'VMCLI_VM_TEMPLATE', str, None)
-VM_POWERON          = get_config('deploy', 'poweron', 'VMCLI_VM_POWERON', bool, True)
+VM_POWERON          = get_config('deploy', 'poweron', 'VMCLI_VM_POWERON', bool, False)
 # If neither command line argument, flavor setting or this global directive is set,
 # first usable object will be used, if possible. E.g. first datacenter found in vCenter.
 VM_DATACENTER       = get_config('deploy', 'datacenter', 'VMCLI_VM_DATACENTER', str, None)
