@@ -23,7 +23,7 @@ class ListCommands(BaseCommands):
         """Lists items in a specific VMware object category."""
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
         self.logger.info('Searching for requested category...')
-        for item in container.view:
+        for item in sorted(container.view, key=lambda x: x.name):
             print(item.name.encode('utf-8'))
 
     @args('--name', help='search for a specific object instead')
