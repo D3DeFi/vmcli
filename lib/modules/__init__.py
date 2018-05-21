@@ -71,7 +71,7 @@ class BaseCommands(object):
         # If searched object is not found and default is True, provide first instance found
         if default:
             try:
-                return sorted(container.view, key=lambda x: x.name)[0]
+                return sorted(container.view, key=lambda x: str(x.name).lower)[0]
             except IndexError:
                 return None
         return None
