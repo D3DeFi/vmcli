@@ -85,18 +85,6 @@ class BaseCommands(object):
         else:
             COMMANDS[name] = class_name
 
-    def get_vm_obj(self, name):
-        """Gets object associated with the virtual machine name provided and fails if None is found."""
-        # Uses hostname provided by vmware tools running on the guest and because of this fact, it is unreliable
-        name = name.split('.')[0]
-        self.logger.debug('Loading VMware object: {}'.format(name))
-        vm = self.content.searchIndex.FindByDnsName(datacenter=None, dnsName=name, vmSearch=True)
-        if not vm:
-            raise VmCLIException('VM with name {} not found!'.format(name))
-        else:
-            self.logger.debug('Found matching object {}'.format(vm))
-            return vm
-
     def wait_for_tasks(self, tasks):
         """Method waits for all of the provided tasks and returns after they finished their runs."""
         property_collector = self.content.propertyCollector
