@@ -49,13 +49,15 @@ class ModifyCommands(BaseCommands):
         self.wait_for_tasks([task])
 
     @args('--net', help='network to attach to a network device')
-    @args('--dev', type=int, help='serial number of device to modify (e.g. 1 == eth0, 2 == eth1)')
-    def change_network(self, name, net, dev=1):
+    @args('--dev', type=int, default=1, help='serial number of device to modify (e.g. 1 == eth0, 2 == eth1)')
+    def change_network(self, name, net, dev):
         """Changes network associated with a specifc VM's network interface."""
         self.logger.info('Loading required VMware resources...')
         vm = self.get_obj('vm', name)
+        if not vm:
+            raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
         # locate network, which should be assigned to device
-        network = self.get_obj('dvs_portgroup', net)
+        network = self.get_obj('network', net)
         if not network:
             raise VmCLIException('Unable to find provided network {}! Aborting...'.format(net))
 
@@ -69,12 +71,17 @@ class ModifyCommands(BaseCommands):
                     nic_counter += 1
                     continue
 
-                # use portGroupKey and DVS switch to build connection object
-                dvs_port_conn = vim.dvs.PortConnection(
-                        portgroupKey=network.key, switchUuid=network.config.distributedVirtualSwitch.uuid)
+                if isinstance(network, vim.dvs.DistributedVirtualPortgroup):
+                    # specify backing that connects device to a DVS switch portgroup
+                    dvs_port_conn = vim.dvs.PortConnection(
+                            portgroupKey=network.key, switchUuid=network.config.distributedVirtualSwitch.uuid)
+                    backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo(port=dvs_port_conn)
+                else:
+                    # expect simple vim.Network if DistributedVirtualPortgroup was not used
+                    backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo(
+                        useAutoDetect=False, network=network, deviceName=net)
 
-                # specify backing that connects device to a DVS switch portgroup
-                device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo(port=dvs_port_conn)
+                device.backing = backing
                 # specify power status for nic
                 device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
                         connected=True, startConnected=True, allowGuestControl=True)

@@ -18,7 +18,7 @@ VMWARE_TYPES = {
     'datastore': vim.Datastore,
     'datastore_cluster': vim.StoragePod,
     'resource_pool': vim.ResourcePool,
-    'network': vim.dvs.DistributedVirtualPortgroup,
+    'network': vim.Network,
     'dvs_portgroup': vim.dvs.DistributedVirtualPortgroup
 }
 
