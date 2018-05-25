@@ -1,4 +1,5 @@
 from pyVmomi import vim
+from operator import attrgetter
 
 from lib.modules import BaseCommands
 from lib.tools.argparser import args
@@ -22,8 +23,9 @@ class ListCommands(BaseCommands):
     def list_items(self, vimtype):
         """Lists items in a specific VMware object category."""
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
+        sorted_view = sorted(container.view, key=attrgetter('name.lower'))
         self.logger.info('Searching for requested category...')
-        for item in sorted(container.view, key=lambda x: str(x.name).lower):
+        for item in sorted_view:
             print(item.name.encode('utf-8'))
 
     @args('--name', help='search for a specific object instead')

@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 from importlib import import_module
 from pyVmomi import vim, vmodl
+from operator import attrgetter
 
 from lib.tools.logger import logger
 from lib.exceptions import VmCLIException
@@ -63,15 +64,17 @@ class BaseCommands(object):
         # TODO: make cache or find better way to retreive objects + destroy view object (it is huge in mem)
         # Create container view containing object found
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
+        sorted_view = sorted(container.view, key=attrgetter('name.lower'))
+
         if name is not None:
-            for view in container.view:
+            for view in sorted_view:
                 if view.name == name:
                     return view
 
         # If searched object is not found and default is True, provide first instance found
         if default:
             try:
-                return sorted(container.view, key=lambda x: str(x.name).lower)[0]
+                return sorted_view[0]
             except IndexError:
                 return None
         return None
