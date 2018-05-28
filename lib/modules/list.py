@@ -1,5 +1,5 @@
 from pyVmomi import vim
-from operator import attrgetter
+from collections import OrderedDict
 
 from lib.modules import BaseCommands
 from lib.tools.argparser import args
@@ -23,7 +23,10 @@ class ListCommands(BaseCommands):
     def list_items(self, vimtype):
         """Lists items in a specific VMware object category."""
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
-        sorted_view = sorted(container.view, key=attrgetter('name.lower'))
+        # Due to receiving generator-like object, which cannot be reliably sorted alphabeticaly we iterate the object
+        # and convert it to ordered dict with name attribute as a key used later in sort
+        sorted_view = OrderedDict(sorted({x.name: x for x in container.view}.items(), key=lambda t: t[0]))
+        sorted_view = sorted_view.values()
         self.logger.info('Searching for requested category...')
         for item in sorted_view:
             print(item.name.encode('utf-8'))

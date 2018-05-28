@@ -4,7 +4,6 @@ import time
 from collections import OrderedDict
 from importlib import import_module
 from pyVmomi import vim, vmodl
-from operator import attrgetter
 
 from lib.tools.logger import logger
 from lib.exceptions import VmCLIException
@@ -64,7 +63,10 @@ class BaseCommands(object):
         # TODO: make cache or find better way to retreive objects + destroy view object (it is huge in mem)
         # Create container view containing object found
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
-        sorted_view = sorted(container.view, key=attrgetter('name.lower'))
+        # Due to receiving generator-like object, which cannot be reliably sorted alphabeticaly we iterate the object
+        # and convert it to ordered dict with name attribute as a key used later in sort
+        sorted_view = OrderedDict(sorted({x.name: x for x in container.view}.items(), key=lambda t: t[0]))
+        sorted_view = sorted_view.values()
 
         if name is not None:
             for view in sorted_view:
