@@ -18,8 +18,10 @@ class ModifyCommands(BaseCommands):
     def execute(self, args):
         if args.mem or args.cpu:
             self.change_hw_resource(args.name, args.mem, args.cpu)
-        elif args.net or args.dev:
+        elif args.net:
             self.change_network(args.name, args.net, args.dev)
+        elif args.vHWversion:
+            self.change_vHWversion(args.name, args.vHWversion)
         else:
             raise VmCLIException('Too few arguments. Aborting...')
 
@@ -97,6 +99,29 @@ class ModifyCommands(BaseCommands):
                 return
 
         raise VmCLIException('Unable to find ethernet device on a specified target!')
+
+    @args('--vHWversion', help='VM hardware version number to assign to the VM or \'latest\'', metavar='VER')
+    def change_vHWversion(self, name, vHWversion=None):
+        """Changes VM HW version. If version is None, then VM is set to the latest version."""
+        self.logger.info('Loading required VMware resources...')
+        vm = self.get_obj('vm', name)
+        if not vm:
+            raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
+
+        if vHWversion == 'latest':
+            version = None      # None will default to latest so we don't need to search for it
+        else:
+            try:
+                version = 'vmx-{:02d}'.format(vHWversion)
+            except ValueError:
+                raise VmCLIException('VM version must be integer or \'latest\'! Aborting...')
+
+        if vm.runtime.powerState != 'poweredOff':
+            raise VmCLIException('VM hardware version change cannot be performed on running VM! Aborting...')
+
+        self.logger.info('Updating VM hardware version...')
+        task = vm.UpgradeVM_Task(version=version)
+        self.wait_for_tasks([task])
 
 
 BaseCommands.register('modify', ModifyCommands)

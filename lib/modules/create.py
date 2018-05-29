@@ -55,7 +55,6 @@ class CreateEmptyVmCommands(BaseCommands):
         config_spec.numCPUs = args.cpu
         config_spec.files = vm_files
         config_spec.guestId = 'otherLinux64Guest'
-        config_spec.version = 'vmx-08'
 
         folder = self.get_obj('folder', args.folder)
         resource_pool = self.get_obj('resource_pool', args.resource_pool)
@@ -95,9 +94,11 @@ class CreateVmCommandBundle(BaseCommands):
         clone.clone_vm(args.name, args.template, args.datacenter, args.folder, args.datastore,
                        args.cluster, args.resource_pool, False, args.mem, args.cpu, flavor=args.flavor)
 
+        modify = ModifyCommands(self.connection)
+        # Upgrade VM hardware version to the latest
+        modify.change_vHWversion(args.name, vHWversion='latest')
+        # Change network assigned to the first interface on the VM
         if args.net:
-            # Change network assigned to the first interface on the VM
-            modify = ModifyCommands(self.connection)
             modify.change_network(args.name, args.net, dev=1)
         if args.hdd:
             # Attach additional hard drive
