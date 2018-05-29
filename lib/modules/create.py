@@ -35,6 +35,10 @@ class CreateEmptyVmCommands(BaseCommands):
         if not (args.name or args.folder or args.resource_pool or args.datastore):
             raise VmCLIException('Missing arguments! Make sure name, folder, resource_pool and datastore are present.')
 
+        datastore = self.get_obj('datastore', args.datastore)
+        if not datastore:
+            raise VmCLIException('Specified datastore not found! Datastore clusters are not supported with this operation. Aborting...')
+
         # Store logs and snapshots withing same directory as ds_path, which is [datastore]vm_name
         ds_path = '[{}]{}'.format(args.datastore, args.name)
         vm_files = vim.vm.FileInfo(logDirectory=None, snapshotDirectory=None, suspendDirectory=None, vmPathName=ds_path)
