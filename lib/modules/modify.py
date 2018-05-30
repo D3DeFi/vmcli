@@ -120,8 +120,11 @@ class ModifyCommands(BaseCommands):
             raise VmCLIException('VM hardware version change cannot be performed on running VM! Aborting...')
 
         self.logger.info('Updating VM hardware version...')
-        task = vm.UpgradeVM_Task(version=version)
-        self.wait_for_tasks([task])
+        try:
+            task = vm.UpgradeVM_Task(version=version)
+            self.wait_for_tasks([task])
+        except vim.fault.AlreadyUpgraded:
+            pass
 
 
 BaseCommands.register('modify', ModifyCommands)
