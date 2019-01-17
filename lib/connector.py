@@ -34,6 +34,7 @@ def connect(vcenter=None, username=None, password=None, insecure=None):
     # If only password is missing, prompt user interactively
     if (vcenter and username) and not password:
         password = getpass.getpass()
+        conf.PASSWORD = password
     elif not (vcenter and username and password):
         logger.error('No authentication credentials provided!')
         sys.exit(1)
