@@ -13,7 +13,7 @@ class ListCommands(BaseCommands):
     def __init__(self, *args, **kwargs):
         super(ListCommands, self).__init__(*args, **kwargs)
 
-    @args('type', help='for which type of objects to search', choices=[key for key in VMWARE_TYPES.keys()])
+    @args('type', help='for which type of objects to search', choices=[key for key in VMWARE_TYPES])
     def execute(self, args):
         if args.name:
             self.show_item(args.type, args.name)
@@ -25,11 +25,12 @@ class ListCommands(BaseCommands):
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, vimtype, True)
         # Due to receiving generator-like object, which cannot be reliably sorted alphabeticaly we iterate the object
         # and convert it to ordered dict with name attribute as a key used later in sort
-        sorted_view = OrderedDict(sorted({x.name: x for x in container.view}.items(), key=lambda t: t[0]))
-        sorted_view = sorted_view.values()
+        view_items = list({x.name: x for x in container.view}.items())
+        sorted_view = OrderedDict(sorted(view_items, key=lambda t: t[0]))
+        sorted_view = list(sorted_view.values())
         self.logger.info('Searching for requested category...')
         for item in sorted_view:
-            print(item.name.encode('utf-8'))
+            print(item.name)
 
     @args('--name', help='search for a specific object instead')
     def show_item(self, vimtype, name):
@@ -116,5 +117,6 @@ class ListCommands(BaseCommands):
             elif clhost.name == vm_cl_node:
                 return clhost.name
         return cluster
+
 
 BaseCommands.register('list', ListCommands)

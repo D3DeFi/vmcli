@@ -6,8 +6,6 @@ from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
 from flavors import load_vm_flavor
 
-import lib.config as conf
-
 
 class CloneCommands(BaseCommands):
     """clone specific VMware objects, without any further configuration."""
@@ -20,7 +18,7 @@ class CloneCommands(BaseCommands):
     def execute(self, args):
         try:
             self.clone_vm(args.name, args.template, args.datacenter, args.folder, args.datastore,
-                    args.cluster, args.resource_pool, args.poweron, args.mem, args.cpu, args.flavor)
+                          args.cluster, args.resource_pool, args.poweron, args.mem, args.cpu, args.flavor)
         except VmCLIException as e:
             self.exit(e.message, errno=2)
 
@@ -34,7 +32,7 @@ class CloneCommands(BaseCommands):
     @args('--cpu', help='cpu count to set for a vm', type=int, map='VM_CPU')
     @args('--poweron', help='whether to power on vm after cloning', action='store_true', map='VM_POWERON')
     def clone_vm(self, name, template, datacenter=None, folder=None, datastore=None, cluster=None,
-                resource_pool=None, poweron=None, mem=None, cpu=None, flavor=None):
+                 resource_pool=None, poweron=None, mem=None, cpu=None, flavor=None):
         """Clones new virtual machine from a template or any other existing machine."""
         flavor = load_vm_flavor(flavor)
 

@@ -11,6 +11,13 @@ from lib.exceptions import VmCLIException
 from lib.config import VM_OS_TIMEOUT, VM_TOOLS_TIMEOUT
 from lib.constants import VMWARE_TYPES
 
+try:
+    # unfortunately, module_loader overwrittes builtin list function with subcommands name
+    # during import_module('lib.modules.list'), this will help to restore it later in get_obj
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
+
 
 # Object containing registered subcommands to be available to user. Dictionary is used in command line argument
 # parsing of arguments defined with @args decorator as well as subcommand execution.
@@ -65,8 +72,10 @@ class BaseCommands(object):
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
         # Due to receiving generator-like object, which cannot be reliably sorted alphabeticaly we iterate the object
         # and convert it to ordered dict with name attribute as a key used later in sort
-        sorted_view = OrderedDict(sorted({x.name: x for x in container.view}.items(), key=lambda t: t[0]))
-        sorted_view = sorted_view.values()
+        list = builtins.list
+        view_items = list({x.name: x for x in container.view}.items())
+        sorted_view = OrderedDict(sorted(view_items, key=lambda t: t[0]))
+        sorted_view = list(sorted_view.values())
 
         if name is not None:
             for view in sorted_view:

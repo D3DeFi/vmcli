@@ -3,8 +3,6 @@ from pyVmomi import vim
 from lib.modules import BaseCommands
 from lib.tools.argparser import args
 from lib.exceptions import VmCLIException
-
-import lib.config as conf
 from lib.constants import VM_MIN_HDD, VM_MAX_HDD
 
 

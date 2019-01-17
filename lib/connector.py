@@ -41,7 +41,7 @@ def connect(vcenter=None, username=None, password=None, insecure=None):
         atexit.register(Disconnect, connection)
         logger.info('Connection successful!')
         return connection
-    except vim.fault.InvalidLogin as e:
+    except vim.fault.InvalidLogin:
         logger.error('Unable to connect. Check your credentials!')
         sys.exit(1)
     except (requests.exceptions.SSLError, requests.exceptions.ConnectionError) as e:

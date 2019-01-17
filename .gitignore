@@ -1,5 +1,6 @@
 *.pyc
 env/
+log/
 *.swp
 vmcli.yml
 *.log
