@@ -15,6 +15,7 @@ from lib.modules.modify import ModifyCommands
 from lib.modules.power import PowerCommands
 from lib.modules.attach import AttachCommands
 from lib.modules.execute import ExecCommands
+from lib.modules.tag import TagCommands
 
 
 class CreateEmptyVmCommands(BaseCommands):
@@ -89,6 +90,7 @@ class CreateVmCommandBundle(BaseCommands):
     @args('--guest-user', '--gu', help="guest's user under which to run command through vmtools", map='VM_GUEST_USER')
     @args('--guest-pass', '--gp', help="guest user's password", map='VM_GUEST_PASS')
     @args('--callback', help='arguments to pass to callback functions. E.g. --callback "var1; var 2"')
+    @args('--tags', help='tags to assign to VM. E.g. "tag1,tag2". Requires vsphere-automation-sdk-python installed')
     def execute(self, args):
         """Clones VM, assigns it proper hardware devices, powers it on ad prepares it for further configuration."""
         if not args.name or not args.template:
@@ -144,6 +146,10 @@ class CreateVmCommandBundle(BaseCommands):
         # Execute callbacks from callbacks/ directory
         if args.callback:
             execute.exec_callbacks(args, args.callback)
+
+        if args.tags:
+            tag_cmd = TagCommands(self.connection)
+            tag_cmd.execute(args)
 
 
 BaseCommands.register('create', CreateVmCommandBundle)
