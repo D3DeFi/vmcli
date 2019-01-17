@@ -115,6 +115,10 @@ class CreateVmCommandBundle(BaseCommands):
         power.poweron_vm(args.name)
         self.wait_for_guest_os(self.get_obj('vm', args.name))
 
+        if args.tags:
+            tag_cmd = TagCommands(self.connection)
+            tag_cmd.execute(args)
+
         execute = ExecCommands(self.connection)
         # Configure first ethernet device on the host, assumes traditional naming scheme
         if args.net_cfg:
@@ -146,10 +150,6 @@ class CreateVmCommandBundle(BaseCommands):
         # Execute callbacks from callbacks/ directory
         if args.callback:
             execute.exec_callbacks(args, args.callback)
-
-        if args.tags:
-            tag_cmd = TagCommands(self.connection)
-            tag_cmd.execute(args)
 
 
 BaseCommands.register('create', CreateVmCommandBundle)
