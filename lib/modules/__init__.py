@@ -67,28 +67,36 @@ class BaseCommands(object):
         if not vimtype:
             raise VmCLIException('Provided type does not match any existing VMware object types!')
 
-        # TODO: make cache or find better way to retreive objects + destroy view object (it is huge in mem)
-        # Create container view containing object found
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vimtype], True)
-        # Due to receiving generator-like object, which cannot be reliably sorted alphabeticaly we iterate the object
-        # and convert it to ordered dict with name attribute as a key used later in sort
-        list = builtins.list
-        view_items = list({x.name: x for x in container.view}.items())
-        sorted_view = OrderedDict(sorted(view_items, key=lambda t: t[0]))
-        sorted_view = list(sorted_view.values())
-
         if name is not None:
-            for view in sorted_view:
-                if view.name == name:
-                    return view
+            for item in container.view:
+                if item.name == name:
+                    return item
 
         # If searched object is not found and default is True, provide first instance found
         if default:
+            # Order result list before selecting default
+            list = builtins.list
+            view_items = list({x.name: x for x in container.view}.items())
+            sorted_view = OrderedDict(sorted(view_items, key=lambda t: t[0]))
+            sorted_view = list(sorted_view.values())
             try:
                 return sorted_view[0]
             except IndexError:
                 return None
         return None
+
+    def get_vm_obj(self, name, fail_missing=False):
+        """Checks if passed object is of vim.VirtualMachine type, if not retrieves it from container view"""
+        if isinstance(name, vim.VirtualMachine):
+            return name
+        else:
+            self.logger.info('Loading required VMware resources...')
+            vm = self.get_obj('vm', name)
+
+            if not vm and fail_missing:
+                raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
+            return vm
 
     @staticmethod
     def register(name, class_name):

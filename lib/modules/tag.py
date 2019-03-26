@@ -45,10 +45,7 @@ class TagCommands(BaseCommands):
         if not name or not tags:
             raise VmCLIException('Arguments name or tags are missing, cannot continue!')
 
-        self.logger.info('Retreiving VM and Tag objects...')
-        vm = self.get_obj('vm', name)
-        if not vm:
-            raise VmCLIException('No VM with name "{}" found')
+        vm = self.get_vm_obj(name, fail_missing=True)
         # Get vmware ID representation in form 'vm-XXX' for later association
         vm_id = vm._GetMoId()
         vm_dynid = DynamicID(type='VirtualMachine', id=vm_id)

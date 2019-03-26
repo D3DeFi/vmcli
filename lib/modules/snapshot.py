@@ -18,10 +18,7 @@ class SnapshotCommands(BaseCommands):
         if args.operation != 'list' and not args.snapshot:
             raise VmCLIException('Argument --snapshot is required with "{}" operation!'.format(args.operation))
 
-        self.logger.info('Retrieving VM object...')
-        vm = self.get_obj('vm', args.name)
-        if not vm:
-            raise VmCLIException('No VM with name "{}" found')
+        vm = self.get_vm_obj(args.name, fail_missing=True)
 
         if args.operation == 'list':
             self.list_snapshots(vm)

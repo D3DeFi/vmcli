@@ -28,21 +28,21 @@ class PowerCommands(BaseCommands):
             print(vm.runtime.powerState)
 
     def poweron_vm(self, name):
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         if vm.runtime.powerState == 'poweredOff':
             self.wait_for_tasks([vm.PowerOnVM_Task()])
 
     def poweroff_vm(self, name):
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         if vm.runtime.powerState == 'poweredOn':
             self.wait_for_tasks([vm.PowerOffVM_Task()])
 
     def reboot_vm(self, name):
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         self.wait_for_tasks([vm.RebootGuest()])
 
     def reset_vm(self, name):
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         self.wait_for_tasks([vm.ResetVM_Task()])
 
 

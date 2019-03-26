@@ -29,11 +29,10 @@ class ModifyCommands(BaseCommands):
     @args('--cpu', help='cpu count to set for a vm', type=int)
     def change_hw_resource(self, name, mem=None, cpu=None):
         """Changes hardware resource of a specific VM."""
-        self.logger.info('Loading required VMware resources...')
-        vm = self.get_obj('vm', name)
         if not mem and not cpu:
             raise VmCLIException('Neither memory or cpu specified! Cannot run hardware reconfiguration.')
 
+        vm = self.get_vm_obj(name, fail_missing=True)
         config_spec = vim.vm.ConfigSpec()
         if mem:
             mem = normalize_memory(mem)
@@ -54,10 +53,7 @@ class ModifyCommands(BaseCommands):
     @args('--dev', type=int, default=1, help='serial number of device to modify (e.g. 1 == eth0, 2 == eth1)')
     def change_network(self, name, net, dev):
         """Changes network associated with a specifc VM's network interface."""
-        self.logger.info('Loading required VMware resources...')
-        vm = self.get_obj('vm', name)
-        if not vm:
-            raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
+        vm = self.get_vm_obj(name, fail_missing=True)
         # locate network, which should be assigned to device
         network = self.get_obj('network', net)
         if not network:
@@ -103,11 +99,7 @@ class ModifyCommands(BaseCommands):
     @args('--vHWversion', help='VM hardware version number to assign to the VM or \'latest\'', metavar='VER')
     def change_vHWversion(self, name, vHWversion=None):
         """Changes VM HW version. If version is None, then VM is set to the latest version."""
-        self.logger.info('Loading required VMware resources...')
-        vm = self.get_obj('vm', name)
-        if not vm:
-            raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
-
+        vm = self.get_vm_obj(name, fail_missing=True)
         if vHWversion == 'latest':
             version = None      # None will default to latest so we don't need to search for it
         else:

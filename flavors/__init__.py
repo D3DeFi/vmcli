@@ -8,7 +8,7 @@ def load_vm_flavor(name):
     as an argument provided. Found file must contain valid YAML directives."""
     if name:
         try:
-            module = yaml.safe_load(file('flavors/{}.yml'.format(name)))
+            module = yaml.safe_load(open('flavors/{}.yml'.format(name)))
             # Ensure returned object is dictionary
             return dict(module)
         except IOError as e:

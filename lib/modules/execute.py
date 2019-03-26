@@ -30,11 +30,10 @@ class ExecCommands(BaseCommands):
 
     def exec_inside_vm(self, name, commands, guest_user=None, guest_pass=None, wait_for_tools=False):
         """Runs provided command inside guest's operating system."""
-        self.logger.info('Loading required VMware resources...')
-        vm = self.get_obj('vm', name)
         if not commands:
             raise VmCLIException('No command provided for execution!')
 
+        vm = self.get_vm_obj(name, fail_missing=True)
         self.logger.info("Checking if guest's OS has vmtools installed ...")
         if wait_for_tools:
             self.wait_for_guest_vmtools(vm)

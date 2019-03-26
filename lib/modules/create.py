@@ -100,24 +100,28 @@ class CreateVmCommandBundle(BaseCommands):
         clone.clone_vm(args.name, args.template, args.datacenter, args.folder, args.datastore,
                        args.cluster, args.resource_pool, False, args.mem, args.cpu, flavor=args.flavor)
 
+        vm = self.get_vm_obj(args.name, fail_missing=True)
+
         modify = ModifyCommands(self.connection)
         # Upgrade VM hardware version to the latest
-        modify.change_vHWversion(args.name, vHWversion='latest')
+        modify.change_vHWversion(vm, vHWversion='latest')
         # Change network assigned to the first interface on the VM
         if args.net:
-            modify.change_network(args.name, args.net, dev=1)
+            modify.change_network(vm, args.net, dev=1)
         if args.hdd:
             # Attach additional hard drive
             attach = AttachCommands(self.connection)
-            attach.attach_hdd(args.name, args.hdd)
+            attach.attach_hdd(vm, args.hdd)
 
         power = PowerCommands(self.connection)
-        power.poweron_vm(args.name)
-        self.wait_for_guest_os(self.get_obj('vm', args.name))
+        power.poweron_vm(vm)
+        self.wait_for_guest_os(vm)
 
         if args.tags:
+            args_copy = args.copy()
+            args_copy.name = vm
             tag_cmd = TagCommands(self.connection)
-            tag_cmd.execute(args)
+            tag_cmd.execute(args_copy)
 
         execute = ExecCommands(self.connection)
         # Configure first ethernet device on the host, assumes traditional naming scheme
@@ -139,10 +143,10 @@ class CreateVmCommandBundle(BaseCommands):
                     '/bin/bash /usr/share/vmcli/provision-interfaces.sh {} {} {} {} {}'.format(
                             ip.ip, ip.netmask, gateway, ip.network, ip.broadcast)
                 ]
-                execute.exec_inside_vm(args.name, commands, args.guest_user, args.guest_pass, wait_for_tools=True)
+                execute.exec_inside_vm(vm, commands, args.guest_user, args.guest_pass, wait_for_tools=True)
 
         if conf.VM_ADDITIONAL_CMDS:
-            execute.exec_inside_vm(args.name, conf.VM_ADDITIONAL_CMDS, args.guest_user,
+            execute.exec_inside_vm(vm, conf.VM_ADDITIONAL_CMDS, args.guest_user,
                                    args.guest_pass, wait_for_tools=True)
 
         self.logger.info('Deployed vm {}'.format(args.name))

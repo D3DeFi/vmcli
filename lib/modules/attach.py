@@ -34,7 +34,7 @@ class AttachCommands(BaseCommands):
         if not size or size < VM_MIN_HDD or size > VM_MAX_HDD:
             raise VmCLIException('Hdd size must be between {}-{}'.format(VM_MIN_HDD, VM_MAX_HDD))
 
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
 
         disks = []
         controller = None
@@ -105,10 +105,7 @@ class AttachCommands(BaseCommands):
     @args('--net', help='net to attach to a new device (network only)')
     def attach_net_adapter(self, name, net):
         """Attaches virtual network adapter to the vm associated with a VLAN passed via argument."""
-        self.logger.info('Loading required VMware resources...')
-        vm = self.get_obj('vm', name)
-        if not vm:
-            raise VmCLIException('Unable to find specified VM {}! Aborting...'.format(name))
+        vm = self.get_vm_obj(name, fail_missing=True)
         # locate network, which should be assigned to device
         network = self.get_obj('network', net)
         if not network:
@@ -143,7 +140,7 @@ class AttachCommands(BaseCommands):
 
     def attach_floppy_drive(self, name):
         """Attaches floppy drive to the virtual machine."""
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         controller = None
         floppy_device_key = 8000  # 800x reserved for floppies
         # Find Super I/O controller and free device key
@@ -173,7 +170,7 @@ class AttachCommands(BaseCommands):
 
     def attach_cdrom_drive(self, name):
         """Attaches cd/dvd drive to the virtual machine."""
-        vm = self.get_obj('vm', name)
+        vm = self.get_vm_obj(name, fail_missing=True)
         controller = None
         cdrom_device_key = 3000  # 300x reserved for cd/dvd drives in vmware
         # Find last IDE controller and free device key
