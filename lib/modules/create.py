@@ -1,4 +1,5 @@
 import netaddr
+import copy
 from pyVmomi import vim
 
 from lib.modules import BaseCommands
@@ -118,7 +119,7 @@ class CreateVmCommandBundle(BaseCommands):
         self.wait_for_guest_os(vm)
 
         if args.tags:
-            args_copy = args.copy()
+            args_copy = copy.deepcopy(args)
             args_copy.name = vm
             tag_cmd = TagCommands(self.connection)
             tag_cmd.execute(args_copy)
